@@ -1,6 +1,25 @@
 /* js/app.js — Orchestratore principale */
+/* ========== DYNAMIC PADDING ========== */
+function updateMainContentPadding() {
+    const headerEl = document.querySelector('.site-header');
+    const searchEl = document.querySelector('.search-strip');
+    const mainEl = document.querySelector('.main-content');
+
+    if (!headerEl || !searchEl || !mainEl) return;
+
+    const headerHeight = headerEl.offsetHeight;
+    const searchHeight = searchEl.offsetHeight;
+    
+    const gapLgValue = getComputedStyle(document.documentElement).getPropertyValue('--gap-lg').trim();
+
+    // Applica il padding-top dinamicamente
+    mainEl.style.paddingTop = `calc(${headerHeight}px + ${searchHeight}px + ${gapLgValue})`;
+}
 
 /* ========== STORAGE ========== */
+
+
+
 /* CORREZIONE: 'Storage' reso globale (con window.Storage) per essere accessibile da altri moduli come map.js, che altrimenti non potrebbe salvare o caricare le locations. */
 window.Storage = (() => {
   const KEY_LOCS    = 'ps_locations';
@@ -48,6 +67,13 @@ const AppModule = (() => {
   let lastClickedLatLng = null;
 
   function init() {
+    window.addEventListener('resize', updateMainContentPadding);
+    const searchEl = document.querySelector('.search-strip');
+    if (searchEl) {
+        // Questo observer aggiorna il padding ogni volta che la barra di ricerca cambia altezza
+        new ResizeObserver(updateMainContentPadding).observe(searchEl);
+    }
+    updateMainContentPadding(); // Chiamata iniziale
     loadPrefs();
     applyTheme();
     initNav();
@@ -61,7 +87,11 @@ const AppModule = (() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => setLocation(pos.coords.latitude, pos.coords.longitude, 'Posizione attuale'),
-        ()  => setLocation(45.4654, 9.1866, 'Milano (default)')
+        ()  => {
+            showToast('Geolocalizzazione non disponibile. Impostazione su Milano.');
+            setLocation(45.4654, 9.1866, 'Milano (default)');
+        },
+        { timeout: 10000, enableHighAccuracy: true }
       );
     } else {
       setLocation(45.4654, 9.1866, 'Milano (default)');
@@ -158,7 +188,7 @@ const AppModule = (() => {
       results.innerHTML = '';
       data.forEach(r => {
         const div = document.createElement('div');
-        div.className = 'search-result-item';
+        div.className  = 'search-result-item';
         div.textContent = r.display_name;
         div.addEventListener('click', () => {
           results.classList.remove('open');
@@ -176,21 +206,23 @@ const AppModule = (() => {
   /* ---------- SET LOCATION ---------- */
   async function setLocation(lat, lon, name) {
     state.location = { lat, lon, name };
-    document.getElementById('currentLocation').textContent = `📍 ${name} — ${lat.toFixed(4)}, ${lon.toFixed(4)}`;
-
-    // Sun & moon
+    
+    // CORREZIONE: Usiamo innerHTML per separare nome e coordinate in span diversi
+    const locationEl = document.getElementById('currentLocation');
+    if (locationEl) {
+      locationEl.innerHTML = `<span class="location-name">📍 ${name}</span> <span class="location-coords">— ${lat.toFixed(4)}, ${lon.toFixed(4)}</span>`;
+    }
+  
+    // Il resto della funzione rimane invariato...
     state.sunData = SunModule.update(lat, lon, state.prefs.use12h);
-
-    // Weather
     try {
       state.weather = await WeatherModule.fetch(lat, lon, state.prefs.tempUnit);
     } catch (e) {
       showToast('Errore meteo — controlla la connessione');
     }
-
-    // Map
     MapModule.setCenter(lat, lon);
     showToast(`📍 ${name}`);
+    // checkPermitsForLocation(lat, lon, name); // Ho commentato questa riga perché non l'abbiamo ancora implementata
   }
 
   /* ---------- SETTINGS ---------- */

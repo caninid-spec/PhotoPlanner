@@ -18,7 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
   <!-- CORREZIONE: il percorso del file CSS era errato (puntava a 'style.css' nella root invece che in 'css/style.css') -->
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
@@ -56,32 +56,34 @@
     <!-- SECTION: DASHBOARD -->
     <section id="section-dashboard" class="section active">
 
-      <!-- Golden/Blue Hour -->
-      <div class="card card-hero" id="card-golden">
-        <div class="card-label">Ore Magiche</div>
-        <div class="golden-grid" id="goldenHourData">
-          <div class="golden-item">
-            <span class="golden-title">🌅 Ora Dorata Mattino</span>
-            <span class="golden-time" id="goldenMornStart">--:--</span>
-            <span class="golden-duration" id="goldenMornDur">— min</span>
-          </div>
-          <div class="golden-item">
-            <span class="golden-title">🌃 Ora Blu Mattino</span>
-            <span class="golden-time" id="blueMornStart">--:--</span>
-            <span class="golden-duration" id="blueMornDur">— min</span>
-          </div>
-          <div class="golden-item">
-            <span class="golden-title">🌇 Ora Dorata Sera</span>
-            <span class="golden-time" id="goldenEveStart">--:--</span>
-            <span class="golden-duration" id="goldenEveDur">— min</span>
-          </div>
-          <div class="golden-item">
-            <span class="golden-title">🌆 Ora Blu Sera</span>
-            <span class="golden-time" id="blueEveStart">--:--</span>
-            <span class="golden-duration" id="blueEveDur">— min</span>
-          </div>
+    <!-- Golden/Blue Hour -->
+    <div class="card card-hero" id="card-golden">
+     
+      <!-- CORREZIONE: Testi tradotti in inglese -->
+      <div class="card-label">Magic Hours</div>
+      <div class="golden-grid" id="goldenHourData">
+        <div class="golden-item">
+          <span class="golden-title">🌅 Morning Golden Hour</span>
+          <span class="golden-time" id="goldenMornStart">--:--</span>
+          <span class="golden-duration" id="goldenMornDur">— min</span>
+        </div>
+        <div class="golden-item">
+          <span class="golden-title">🌃 Morning Blue Hour</span>
+          <span class="golden-time" id="blueMornStart">--:--</span>
+          <span class="golden-duration" id="blueMornDur">— min</span>
+        </div>
+        <div class="golden-item">
+          <span class="golden-title">🌇 Evening Golden Hour</span>
+          <span class="golden-time" id="goldenEveStart">--:--</span>
+          <span class="golden-duration" id="goldenEveDur">— min</span>
+        </div>
+        <div class="golden-item">
+          <span class="golden-title">🌆 Evening Blue Hour</span>
+          <span class="golden-time" id="blueEveStart">--:--</span>
+          <span class="golden-duration" id="blueEveDur">— min</span>
         </div>
       </div>
+    </div>
 
       <!-- Sun & Moon Row -->
       <div class="two-col">
@@ -95,7 +97,7 @@
             <div class="sun-row"><span>Azimut attuale</span><strong id="sunAzimuth">--°</strong></div>
             <div class="sun-row"><span>Elevazione</span><strong id="sunAltitude">--°</strong></div>
           </div>
-          <canvas id="sunArcCanvas" width="260" height="90"></canvas>
+          <canvas id="sunArcCanvas"></canvas>
         </div>
 
         <div class="card" id="card-moon">

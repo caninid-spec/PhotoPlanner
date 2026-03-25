@@ -95,6 +95,13 @@ const SunModule = (() => {
     const canvas = document.getElementById('sunArcCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
+    
+    // CORREZIONE: Imposta la risoluzione del canvas in base alla sua dimensione reale
+    // Questo evita che il disegno risulti sfuocato o tagliato
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.width * 0.5; 
+    
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
 

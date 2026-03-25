@@ -4,24 +4,24 @@
 
 /* --- FONTS --- */
 /* Display: Playfair Display (headings, logo, card labels)
-   Body:    DM Sans (everything else)
+   Body:     DM Sans (everything else)
    Loaded via Google Fonts in HTML */
 
 /* --- CSS VARIABLES --- */
 :root {
   /* Colors — dark theme (default) */
-  --bg:          #0d1117;
-  --bg-card:     #161c26;
-  --bg-card2:    #1c2432;
-  --border:      #2a3347;
-  --text:        #d6e0f0;
-  --text-muted:  #7a8aa0;
-  --text-dim:    #3d4f66;
-  --accent:      #e8a84c;
-  --accent2:     #4c7fe8;
-  --accent3:     #6edba4;
-  --danger:      #e8534c;
-  --warning:     #e8c44c;
+  --bg:           #0d1117;
+  --bg-card:      #161c26;
+  --bg-card2:     #1c2432;
+  --border:       #2a3347;
+  --text:         #d6e0f0;
+  --text-muted:   #7a8aa0;
+  --text-dim:     #3d4f66;
+  --accent:       #e8a84c;
+  --accent2:      #4c7fe8;
+  --accent3:      #6edba4;
+  --danger:       #e8534c;
+  --warning:      #e8c44c;
 
   /* Typography scale */
   --font-display: 'Playfair Display', Georgia, serif;
@@ -70,9 +70,7 @@ body.theme-light {
 
 /* --- RESET / BASE --- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { scroll-behavior: smooth; }
-
 body {
   font-family: var(--font-body);
   font-size: var(--size-base);
@@ -84,7 +82,6 @@ body {
   overflow-x: hidden;
   transition: background 0.3s, color 0.3s;
 }
-
 a { color: var(--accent); text-decoration: none; }
 button { cursor: pointer; font-family: var(--font-body); }
 input, textarea, select { font-family: var(--font-body); color: var(--text); }
@@ -109,7 +106,6 @@ canvas { display: block; max-width: 100%; }
   max-width: 1200px;
   margin: 0 auto;
 }
-
 .logo {
   display: flex;
   align-items: center;
@@ -128,7 +124,6 @@ canvas { display: block; max-width: 100%; }
   letter-spacing: 0.03em;
   color: var(--text);
 }
-
 .main-nav {
   display: flex;
   gap: var(--gap-xs);
@@ -138,7 +133,6 @@ canvas { display: block; max-width: 100%; }
   scrollbar-width: none;
 }
 .main-nav::-webkit-scrollbar { display: none; }
-
 .nav-btn {
   padding: 0.3rem var(--gap);
   border-radius: 20px;
@@ -156,7 +150,6 @@ canvas { display: block; max-width: 100%; }
   color: var(--bg);
   border-color: var(--accent);
 }
-
 .settings-btn {
   background: none;
   border: 1px solid var(--border);
@@ -215,12 +208,31 @@ canvas { display: block; max-width: 100%; }
 }
 .search-btn:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .gps-btn:hover { background: var(--accent2); color: white; border-color: var(--accent2); }
+
+/* Stile per la barra della località attuale */
 .current-location {
+  padding: 8px 16px;
   text-align: center;
-  font-size: var(--size-xs);
-  color: var(--text-muted);
   margin-top: var(--gap-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.current-location .location-name {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+  vertical-align: middle;
+}
+.current-location .location-coords {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .search-results {
   position: absolute;
   top: 100%;
@@ -250,6 +262,7 @@ canvas { display: block; max-width: 100%; }
   max-width: 1200px;
   margin: 0 auto;
   padding: calc(var(--header-h) + var(--search-h) + var(--gap-lg)) var(--gap-lg) var(--gap-xl);
+  padding: var(--gap-lg) var(--gap-lg) var(--gap-xl);
 }
 
 /* --- SECTIONS --- */
@@ -264,6 +277,9 @@ canvas { display: block; max-width: 100%; }
   padding: var(--gap-lg);
   box-shadow: var(--shadow-sm);
   transition: background 0.3s;
+  /* CORREZIONE: Permette alla card di crescere se il contenuto è più alto */
+  display: flex;
+  flex-direction: column;
 }
 .card-label {
   font-family: var(--font-display);
@@ -278,26 +294,37 @@ canvas { display: block; max-width: 100%; }
   gap: var(--gap);
   flex-wrap: wrap;
 }
-
-/* Hero card */
 .card-hero {
   background: linear-gradient(135deg, var(--bg-card) 0%, #1a2336 100%);
   border-color: var(--accent);
-  border-opacity: 0.4;
 }
 
-/* Two-column layout */
+/* --- TWO-COLUMN LAYOUT (PER SOLE/LUNA etc.) --- */
+/* CORREZIONE: Layout mobile-first. Inizia con una colonna. */
 .two-col {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--gap);
+}
+/* CORREZIONE: Passa a due colonne solo su schermi più grandi di 600px */
+@media (min-width: 600px) {
+  .two-col {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 /* --- GOLDEN HOUR GRID --- */
+/* CORREZIONE: Layout mobile-first. Inizia con una colonna per schermi molto stretti. */
 .golden-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: var(--gap);
+}
+/* CORREZIONE: Passa a due colonne su schermi un po' più grandi */
+@media (min-width: 450px) {
+  .golden-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 .golden-item {
   background: var(--bg-card2);
@@ -360,8 +387,14 @@ canvas { display: block; max-width: 100%; }
 .weather-desc { font-size: var(--size-sm); color: var(--text-muted); margin-top: var(--gap-xs); }
 .weather-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* CORREZIONE: Inizia con 2 colonne, passa a 4 quando c'è spazio */
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--gap-sm);
+}
+@media (min-width: 500px) {
+  .weather-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .wstat {
   background: var(--bg-card2);
@@ -511,7 +544,6 @@ canvas { display: block; max-width: 100%; }
 .ai-hint { font-size: var(--size-xs); color: var(--text-dim); margin-top: var(--gap-xs); }
 .api-key-row { display: flex; gap: var(--gap-sm); }
 .api-key-row .form-input { flex: 1; }
-
 .ai-chat { display: flex; flex-direction: column; gap: var(--gap); margin-top: var(--gap); }
 .ai-messages {
   display: flex;
@@ -555,7 +587,6 @@ canvas { display: block; max-width: 100%; }
   animation: pulse 1.5s infinite;
 }
 @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
-
 .ai-input-row { display: flex; gap: var(--gap-sm); align-items: flex-end; }
 .ai-input-row .form-input { flex: 1; }
 .ai-analysis-result {
@@ -581,13 +612,11 @@ canvas { display: block; max-width: 100%; }
 }
 .form-input:focus { border-color: var(--accent2); }
 .form-input.small { width: auto; }
-
 .add-location-form {
   display: flex;
   flex-direction: column;
   gap: var(--gap-sm);
 }
-
 .action-btn {
   padding: 0.6rem var(--gap-lg);
   background: var(--accent);
@@ -677,21 +706,17 @@ canvas { display: block; max-width: 100%; }
 .toast.show { transform: translateX(-50%) translateY(0); }
 
 /* --- RESPONSIVE --- */
+/* CORREZIONE: Ho rimosso le vecchie regole responsive e le ho integrate 
+   direttamente negli stili dei componenti con un approccio mobile-first.
+   Questo blocco ora serve solo per aggiustamenti finali. */
 @media (max-width: 800px) {
   .main-content { padding-left: var(--gap); padding-right: var(--gap); }
   .search-strip { padding-left: var(--gap); padding-right: var(--gap); }
   .header-inner { padding: 0 var(--gap); }
-  .two-col { grid-template-columns: 1fr; }
-  .golden-grid { grid-template-columns: 1fr 1fr; }
-  .weather-stats { grid-template-columns: repeat(2, 1fr); }
-  #map { height: 280px; }
+  #map { height: 320px; }
 }
 @media (max-width: 500px) {
-  :root { --header-h: 50px; --search-h: 66px; }
   .logo-text { display: none; }
-  .golden-grid { grid-template-columns: 1fr; }
-  .weather-stats { grid-template-columns: repeat(2, 1fr); }
-  .golden-time { font-size: var(--size-lg); }
   .main-nav { gap: 2px; }
   .nav-btn { padding: 0.25rem 0.6rem; font-size: var(--size-xs); }
 }
@@ -702,4 +727,14 @@ canvas { display: block; max-width: 100%; }
   color: var(--text-muted);
   font-size: var(--size-sm);
   padding: var(--gap-xl) var(--gap);
+}
+
+/* CORREZIONE: Rimossi i vecchi stili per .current-location-display e .current-location 
+   che non servono più o sono stati integrati meglio sopra. */
+
+   /* --- CANVAS FIXES --- */
+#sunArcCanvas, #cloudCanvas {
+  width: 100%;
+  height: auto; /* Mantiene le proporzioni se l'altezza è impostata in JS */
+  border-radius: var(--r-sm);
 }

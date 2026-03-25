@@ -92,11 +92,19 @@ const WeatherModule = (() => {
     const canvas = document.getElementById('cloudCanvas');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const W = canvas.offsetWidth || 600;
-    canvas.width = W;
+    
+    // CORREZIONE: Usa getBoundingClientRect() per ottenere la larghezza reale
+    // ed evitare problemi di rendering quando l'elemento è nascosto.
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0) return; // Non disegnare se il canvas non è visibile
+    
+    canvas.width = rect.width;
+    canvas.height = rect.height; // Manteniamo l'altezza fissa come da design originale
+    
+    const W = canvas.width;
     const H = canvas.height;
-
     ctx.clearRect(0, 0, W, H);
+
     const isDark = !document.body.classList.contains('theme-light');
 
     // Only next 24h
