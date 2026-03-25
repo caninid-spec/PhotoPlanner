@@ -7,6 +7,7 @@ const MapModule = (() => {
   let layers = {};
   let userMarker = null;
   let initialized = false;
+  let lastClickedOnMap = null; // CORREZIONE: Aggiunta variabile per memorizzare il click sulla mappa
 
   const ICON_COLORS = {
     user:    '#4c7fe8',
@@ -66,7 +67,10 @@ const MapModule = (() => {
 
     // Click su mappa per aggiungere location
     map.on('click', e => {
-      AppModule.lastClickedLatLng = { lat: e.latlng.lat, lon: e.latlng.lng };
+      /* CORREZIONE: Il modo originale di salvare le coordinate cliccate ('AppModule.lastClickedLatLng = ...') non funzionava a causa di problemi di scope e accessors.
+         Ora le coordinate vengono salvate in una variabile locale a questo modulo e recuperate da app.js quando necessario. */
+      lastClickedOnMap = { lat: e.latlng.lat, lon: e.latlng.lng };
+      showToast('Punto sulla mappa selezionato. Compila il form per aggiungerlo.');
     });
   }
 
@@ -162,6 +166,14 @@ const MapModule = (() => {
       }
     });
   }
+  
+  // CORREZIONE: Aggiunte funzioni per permettere ad app.js di leggere e resettare la coordinata cliccata
+  function getLastClicked() {
+    return lastClickedOnMap;
+  }
+  function clearLastClicked() {
+    lastClickedOnMap = null;
+  }
 
-  return { init, setCenter, addLocationMarker, renderSavedLocations, flyTo, removeLoc, reloadMarkers };
+  return { init, setCenter, addLocationMarker, renderSavedLocations, flyTo, removeLoc, reloadMarkers, getLastClicked, clearLastClicked };
 })();

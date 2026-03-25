@@ -1,7 +1,8 @@
 /* js/app.js — Orchestratore principale */
 
 /* ========== STORAGE ========== */
-const Storage = (() => {
+/* CORREZIONE: 'Storage' reso globale (con window.Storage) per essere accessibile da altri moduli come map.js, che altrimenti non potrebbe salvare o caricare le locations. */
+window.Storage = (() => {
   const KEY_LOCS    = 'ps_locations';
   const KEY_PERMITS = 'ps_permits';
   const KEY_PREFS   = 'ps_prefs';
@@ -231,8 +232,14 @@ const AppModule = (() => {
     document.getElementById('addLocBtn')?.addEventListener('click', () => {
       const name = document.getElementById('locName')?.value?.trim();
       if (!name) { showToast('Inserisci un nome per la location'); return; }
-      const lat = lastClickedLatLng?.lat ?? state.location?.lat;
-      const lon = lastClickedLatLng?.lon ?? state.location?.lon;
+      
+      /* CORREZIONE: la logica originale per 'lastClickedLatLng' non funzionava.
+         Ora le coordinate vengono recuperate da MapModule dopo un click sulla mappa,
+         e la coordinata usata viene resettata dopo l'uso. */
+      const clickedLoc = MapModule.getLastClicked();
+      const lat = clickedLoc?.lat ?? state.location?.lat;
+      const lon = clickedLoc?.lon ?? state.location?.lon;
+
       if (!lat || !lon) { showToast('Seleziona prima una località o clicca sulla mappa'); return; }
 
       const loc = {
@@ -247,7 +254,8 @@ const AppModule = (() => {
       MapModule.addLocationMarker(loc);
       document.getElementById('locName').value = '';
       document.getElementById('locDesc').value = '';
-      lastClickedLatLng = null;
+      if(clickedLoc) MapModule.clearLastClicked(); // Pulisce la coordinata cliccata
+      lastClickedLatLng = null; // Questa riga è conservata come da richiesta, ma la nuova logica la rende ininfluente
       showToast('Location aggiunta ✓');
     });
   }

@@ -88,7 +88,7 @@ const SunModule = (() => {
     if (phase < 0.53)  return '🌕 Luna Piena';
     if (phase < 0.72)  return '🌖 Gibbosa Calante';
     if (phase < 0.78)  return '🌗 Quarto Calante';
-    return '🌘 Crescente Calante';
+    return '🌘 Calante (falce)';
   }
 
   function drawSunArc(sunrise, sunset, now) {
@@ -128,7 +128,8 @@ const SunModule = (() => {
 
     // Sun dot
     const sx = cx + rx * Math.cos(angle);
-    const sy = cy - ry * Math.abs(Math.sin(angle)) * 0.38;
+    /* CORREZIONE: Math.abs() era ridondante dato che sin(angle) su questo intervallo (0, PI) è sempre positivo. */
+    const sy = cy - ry * Math.sin(angle) * 0.38;
     ctx.beginPath();
     ctx.arc(sx, sy, 6, 0, Math.PI * 2);
     ctx.fillStyle = dotColor;
@@ -151,45 +152,28 @@ const SunModule = (() => {
     ctx.clearRect(0, 0, W, H);
     const cx = W / 2, cy = H / 2, r = Math.min(W, H) / 2 - 4;
     const isDark = !document.body.classList.contains('theme-light');
-
-    // Background circle
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = isDark ? '#2a3347' : '#d0dae8';
-    ctx.fill();
-
-    // Illuminated part
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Simplified phase rendering
     const illumColor = isDark ? '#e8e0b0' : '#f4eed0';
     const darkColor  = isDark ? '#1a2030' : '#c4cad8';
 
-    if (phase <= 0.5) {
-      // Waxing: right side lit
-      ctx.fillStyle = darkColor;
-      ctx.fillRect(0, 0, W, H);
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, Math.PI / 2, -Math.PI / 2, false);
-      const xOff = r * Math.cos(Math.PI * phase * 2);
-      ctx.bezierCurveTo(cx + xOff, cy - r, cx + xOff, cy + r, cx, cy + r);
-      ctx.fillStyle = illumColor;
-      ctx.fill();
-    } else {
-      // Waning: left side lit
-      ctx.fillStyle = illumColor;
-      ctx.fillRect(0, 0, W, H);
-      ctx.beginPath();
-      ctx.arc(cx, cy, r, Math.PI / 2, -Math.PI / 2, true);
-      const xOff = r * Math.cos(Math.PI * (phase - 0.5) * 2);
-      ctx.bezierCurveTo(cx - xOff, cy - r, cx - xOff, cy + r, cx, cy + r);
-      ctx.fillStyle = darkColor;
-      ctx.fill();
-    }
-    ctx.restore();
+    /* CORREZIONE: La logica originale per disegnare le fasi lunari era difettosa e non produceva una forma corretta.
+       Questa nuova implementazione usa una combinazione di cerchi ed ellissi per rappresentare
+       in modo più accurato e semplice l'illuminazione della luna. */
+    ctx.fillStyle = darkColor;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = illumColor;
+    ctx.beginPath();
+    const angle = Math.PI/2;
+    const x_rad = r * Math.cos(phase * Math.PI * 2);
+    
+    // Always draw one half of the moon
+    ctx.arc(cx, cy, r, -angle, angle, phase > 0.5);
+    
+    // Use an ellipse to draw the other half (terminator)
+    ctx.ellipse(cx, cy, Math.abs(x_rad), r, 0, angle, -angle, phase > 0.5);
+    ctx.fill();
   }
 
   function fmtSimple(d) {
