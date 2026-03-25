@@ -1,49 +1,85 @@
-/* sw.js — Service Worker per PWA */
-const CACHE   = 'photoscout-v1';
-const ASSETS  = [
+/* sw.js - Service Worker con strategia "Network First" */
+
+const CACHE_NAME = 'photographer-spot-cache-v1.2'; // Aggiornato il nome della cache
+const ASSETS_TO_CACHE = [
   '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/sun.js',
-  '/js/weather.js',
-  '/js/map.js',
-  '/js/ai.js',
-  '/manifest.json',
+  'index.html',
+  'style.css',
+  'app.js',
+  'map.js',
+  'weather.js',
+  'sun.js',
+  'ai.js',
+  'manifest.json',
+  'img/icons/icon-192x192.png',
+  'img/icons/icon-512x512.png',
+  // Aggiungi qui altre immagini o asset statici importanti
+  'img/markers/marker-user.png',
+  'img/markers/marker-photo.png',
+  'img/markers/marker-poi.png',
+  'img/markers/marker-food.png'
 ];
 
-self.addEventListener('install', e => {
-  e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+// FASE 1: Installazione del Service Worker e Caching degli asset statici
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Service Worker: Caching assets statici');
+        return cache.addAll(ASSETS_TO_CACHE);
+      })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', e => {
-  e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+// FASE 2: Attivazione e pulizia delle vecchie cache
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('Service Worker: Pulizia vecchia cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
+  return self.clients.claim();
 });
 
-self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  // Network-first per API esterne, cache-first per asset locali
-  if (
-    url.hostname.includes('openstreetmap') ||
-    url.hostname.includes('open-meteo') ||
-    url.hostname.includes('nominatim') ||
-    url.hostname.includes('openai') ||
-    url.hostname.includes('arcgis') ||
-    url.hostname.includes('googleapis') ||
-    url.hostname.includes('unpkg')
-  ) {
-    e.respondWith(
-      fetch(e.request).catch(() => caches.match(e.request))
-    );
+// FASE 3: Gestione delle richieste (Fetch) con strategia "Network First"
+self.addEventListener('fetch', event => {
+  // Ignora le richieste non-GET (es. POST)
+  if (event.request.method !== 'GET') {
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request))
+
+  // Ignora le richieste alle API esterne (es. OpenStreetMap, Open-Meteo)
+  if (event.request.url.startsWith('https://')) {
+    return;
+  }
+
+  event.respondWith(
+    // 1. Prova a ottenere la risorsa dalla rete
+    fetch(event.request)
+      .then(networkResponse => {
+        // Se la rete risponde, usiamo quella e aggiorniamo la cache
+        return caches.open(CACHE_NAME).then(cache => {
+          // Non mettere in cache le risposte di errore
+          if (networkResponse.ok) {
+            cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        });
+      })
+      .catch(() => {
+        // 2. Se la rete fallisce (offline), cerca nella cache
+        console.log('Service Worker: Rete non disponibile, cerco nella cache per:', event.request.url);
+        return caches.match(event.request).then(cachedResponse => {
+          return cachedResponse || new Response("Contenuto non disponibile offline.", { status: 404, statusText: "Not Found" });
+        });
+      })
   );
 });

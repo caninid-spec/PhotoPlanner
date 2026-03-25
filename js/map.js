@@ -1,10 +1,8 @@
-/* js/map.js - Gestore della mappa Leaflet */
+/* js/map.js - Gestore della mappa Leaflet corretto */
 
 const MapModule = (() => {
-  let map = null; // La variabile della mappa è ora interna al modulo
+  let map = null;
   let lastClicked = null;
-
-  // ICONE PERSONALIZZATE
   const ICONS = {
     user: L.icon({ iconUrl: 'img/markers/marker-user.png', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] }),
     photo: L.icon({ iconUrl: 'img/markers/marker-photo.png', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32] }),
@@ -14,84 +12,56 @@ const MapModule = (() => {
 
   /**
    * ---- MODIFICA CHIAVE ----
-   * La funzione init ora crea la mappa la prima volta che viene chiamata,
-   * utilizzando le coordinate fornite da app.js, invece di usare valori predefiniti.
+   * La funzione init ora è l'UNICO punto di ingresso per creare la mappa.
+   * Non c'è più codice che la esegue in automatico.
    */
   function init(lat, lon) {
-    if (map) {
-      // Se la mappa esiste già, imposta solo il centro e non fare altro.
-      map.setView([lat, lon], 13);
-      return;
-    }
+    // Se la mappa esiste già, non fare nulla. L'aggiornamento è gestito da setCenter.
+    if (map) return;
 
-    // Se la mappa non esiste, la creiamo.
+    // Crea la mappa usando le coordinate corrette fornite da app.js
     map = L.map('map').setView([lat, lon], 13);
     lastClicked = null;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(map);
 
-    // Aggiunge un gestore di eventi per il click sulla mappa
     map.on('click', onMapClick);
   }
 
   function onMapClick(e) {
-    lastClicked = e.latlng; // Salva le coordinate dell'ultimo click
-    const popupContent = `
-      <div>
-        Coordinate: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}<br>
-        <small>Puoi usare queste coordinate per aggiungere una nuova location.</small>
-      </div>`;
-    L.popup()
-      .setLatLng(e.latlng)
-      .setContent(popupContent)
-      .openOn(map);
+    lastClicked = e.latlng;
+    const popupContent = `<div>Coordinate: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}</div>`;
+    L.popup().setLatLng(e.latlng).setContent(popupContent).openOn(map);
   }
 
   function setCenter(lat, lon) {
     if (map) {
-      map.flyTo([lat, lon], 14);
+      map.flyTo([lat, lon], 14); // Usa flyTo per un'animazione fluida
     }
   }
 
   function addLocationMarker(loc) {
     if (!map) return;
-    const marker = L.marker([loc.lat, loc.lon], { icon: ICONS[loc.type] || ICONS.user })
+    L.marker([loc.lat, loc.lon], { icon: ICONS[loc.type] || ICONS.user })
       .addTo(map)
       .bindPopup(`<b>${loc.name}</b><br>${loc.desc || ''}`);
   }
 
   function reloadMarkers() {
     if (!map) return;
-    // Rimuove i vecchi marker prima di aggiungerne di nuovi
     map.eachLayer(layer => {
-      if (layer instanceof L.Marker) {
-        map.removeLayer(layer);
-      }
+      if (layer instanceof L.Marker) map.removeLayer(layer);
     });
-
     const locations = window.Storage.getLocations();
     locations.forEach(loc => addLocationMarker(loc));
   }
 
-  // Funzioni per recuperare e pulire l'ultimo click
-  function getLastClicked() {
-    return lastClicked;
-  }
+  function getLastClicked() { return lastClicked; }
+  function clearLastClicked() { lastClicked = null; }
 
-  function clearLastClicked() {
-    lastClicked = null;
-  }
-
-  // Esporta le funzioni che devono essere accessibili dall'esterno (es. da app.js)
-  return {
-    init,
-    setCenter,
-    addLocationMarker,
-    reloadMarkers,
-    getLastClicked,
-    clearLastClicked,
-  };
+  // Esponi le funzioni pubbliche
+  return { init, setCenter, addLocationMarker, reloadMarkers, getLastClicked, clearLastClicked };
 })();
