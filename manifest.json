@@ -2,7 +2,7 @@
   "name": "PhotoScout — Pianificatore Scatti",
   "short_name": "PhotoScout",
   "description": "Pianificatore fotografico all-in-one: meteo, sole, luna, mappa, permessi.",
-  "start_url": "/",
+  "start_url": "/PhotoPlanner/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",
