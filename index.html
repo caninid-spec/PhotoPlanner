@@ -208,33 +208,56 @@
 
     <!-- SECTION: AI SCOUT -->
     <section id="section-ai" class="section">
-      <div class="card">
-        <div class="card-label">AI Scout — Consigli Fotografici</div>
-        <div class="ai-api-setup" id="aiApiSetup">
-          <p class="ai-info">Inserisci la tua chiave API OpenAI per attivare i consigli AI personalizzati basati su meteo, luce e posizione.</p>
-          <div class="api-key-row">
-            <input type="password" id="openaiKey" placeholder="sk-..." class="form-input" />
-            <button class="action-btn" id="saveApiKey">Salva chiave</button>
-          </div>
-          <p class="ai-hint">La chiave viene salvata solo in locale (localStorage) e non viene mai inviata a terzi se non ad OpenAI.</p>
+      <div class="card card-hero">
+    <div class="card-label">Configurazione AI Scout</div>
+    <div id="aiApiSetup">
+      <p style="margin-bottom: var(--gap-sm); font-size: var(--size-sm);">Inserisci la tua chiave OpenAI per attivare l'assistente fotografico.</p>
+      <div class="search-wrap">
+        <input type="password" id="openaiKey" class="search-input" placeholder="sk-..." />
+        <button class="search-btn" id="saveApiKey">Salva</button>
+      </div>
+    </div>
+    
+    <div id="aiInputs" style="display:none; margin-top: var(--gap);">
+      <div class="ai-grid-inputs">
+        <div class="input-group">
+          <label>Tipo di Fotografia</label>
+          <select id="aiPhotoType" class="search-input">
+            <option value="street">Street Photography</option>
+            <option value="paesaggistica">Paesaggistica</option>
+            <option value="architettura">Architettura</option>
+            <option value="ritratto">Ritratto</option>
+            <option value="naturalistica">Naturalistica</option>
+            <option value="notturna">Notturna / Astrofotografia</option>
+          </select>
         </div>
-        <div class="ai-chat" id="aiChat">
-          <div class="ai-messages" id="aiMessages">
-            <div class="ai-msg ai-msg-system">Ciao! Sono il tuo AI Scout fotografico. Dimmi dove vuoi scattare e ti aiuto con consigli su orari, luce, composizione e location. 📷</div>
-          </div>
-          <div class="ai-input-row">
-            <textarea id="aiInput" placeholder="Chiedi consigli su location, meteo, attrezzatura..." class="form-input" rows="2"></textarea>
-            <button class="action-btn" id="aiSend">Invia ✦</button>
-          </div>
+        <div class="input-group">
+          <label>Raggio di ricerca (km)</label>
+          <input type="number" id="aiRadius" class="search-input" value="10" min="1" max="50">
+        </div>
+        <div class="input-group">
+          <label>Ora dello scatto</label>
+          <input type="time" id="aiShootTime" class="search-input">
         </div>
       </div>
-      <div class="card" id="card-ai-analysis">
-        <div class="card-label">Analisi Condizioni Attuali</div>
-        <button class="action-btn full-width" id="analyzeBtn">Analizza condizioni per scattare ora</button>
-        <div class="ai-analysis-result" id="aiAnalysisResult"></div>
+      <button class="search-btn" id="aiGenerate" style="width:100%; margin-top: var(--gap); background: var(--accent2); color: white;">
+        ✨ Genera Suggerimenti Location
+      </button>
+    </div>
+      </div>
+    
+      <div id="aiChat" class="card" style="display:none; flex:1; min-height: 400px;">
+        <div class="card-label">Risultati AI Scout</div>
+        <div id="aiMessages" class="ai-messages-container">
+          </div>
+        <div class="ai-input-area" style="margin-top: auto; padding-top: var(--gap); border-top: 1px solid var(--border);">
+          <div class="search-wrap">
+            <input type="text" id="aiInput" class="search-input" placeholder="Chiedi dettagli extra..." />
+            <button class="search-btn" id="aiSend">Invia</button>
+          </div>
+        </div>
       </div>
     </section>
-
   </main>
 
   <!-- SETTINGS MODAL -->
