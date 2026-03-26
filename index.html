@@ -15,76 +15,58 @@
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="logo">📷 PhotoWeather</div>
-    <div class="search-wrap">
-      <div class="search-bar"><span>🔍</span><input type="text" id="searchInput" placeholder="Cerca luogo, montagna, lago…" autocomplete="off"></div>
-      <div class="search-results" id="searchResults"></div>
-    </div>
-    <div class="top-actions">
-      <button class="btn-icon" id="sunBtnTop" onclick="toggleSunTool()" title="Strumento sole (S)">☀️</button>
-      <button class="btn-icon" onclick="startAddSpot()" title="Aggiungi spot">📍</button>
-      <button class="btn-icon" onclick="locateMe()" title="Posizione (L)">◎</button>
-      <button class="btn-icon active">👤</button>
-    </div>
-  </div>
+<header class="site-header">
+  <div class="logo">📷 PhotoWeather</div>
+</header>
 
-  <div class="main">
-    <div class="sidebar" id="sidebar">
-      <div class="sidebar-tabs">
-        <div class="tab active" onclick="switchTab('map')">🗺 Mappa</div>
-        <div class="tab" onclick="switchTab('meteo')">🌡 Meteo</div>
-        <div class="tab" onclick="switchTab('assistant')">✨ Assistente</div> <!-- NUOVO TAB -->
-        <div class="tab" onclick="switchTab('alerts')">🔔 Allerte</div>
-        <div class="tab" onclick="switchTab('feed')">📰 Feed</div>
-      </div>
-      <div class="sc">
-        <!-- MAP PANEL -->
-        <div class="panel active" id="panel-map">
-            <p class="slabel">Sorgente Dati</p>
-            <div class="mo active" onclick="selModel(this,'Europa Centrale')"><div class="mo-name">Europa Centrale</div><div class="mo-det">2,2 km · 24h · ogni 3h</div></div>
-            <div class="mo" onclick="selModel(this,'Europa')"><div class="mo-name">Europa</div><div class="mo-det">7 km · 72h · ogni 3h</div></div>
-            <p class="slabel">Parametro Meteo</p>
-            <div class="pgrid">
-              <div class="pc active" onclick="selParam(this,'cloud_cover_low','Cielo Rosso','rg')"><div class="pi">🔴</div><div class="pn">Cielo Rosso</div></div>
-              <div class="pc" onclick="selParam(this,'visibility','Nebbia','bw')"><div class="pi">🌫</div><div class="pn">Nebbia</div></div>
-              <div class="pc" onclick="selParam(this,'precipitation_probability','Temporale','pu')"><div class="pi">⛈</div><div class="pn">Temporale</div></div>
-              <div class="pc" onclick="selParam(this,'cloud_cover','Cielo Notturno','in')"><div class="pi">🌙</div><div class="pn">Cielo Notturno</div></div>
-              <div class="pc" onclick="selParam(this,'direct_radiation','Alba/Tramonto','or')"><div class="pi">🌅</div><div class="pn">Alba/Tramonto</div></div>
-              <div class="pc" onclick="selParam(this,'shortwave_radiation','Contrasto','ye')"><div class="pi">☀️</div><div class="pn">Contrasto</div></div>
-              <div class="pc" onclick="selParam(this,'wind_speed_10m','Riflesso','te')"><div class="pi">🌊</div><div class="pn">Riflesso</div></div>
-              <div class="pc" onclick="selParam(this,'cloud_cover_high','Ora Blu','bl')"><div class="pi">🌌</div><div class="pn">Ora Blu</div></div>
-            </div>
-            <p class="slabel">Orario Previsione</p>
-            <div class="td" id="timeDisplay">06:00</div>
-            <div class="tdate" id="timeDate">—</div>
-            <input type="range" min="0" max="71" value="6" id="timeSlider" oninput="onTime(this.value)">
-            <div class="tsteps"><span class="tstep mark" onclick="setHr(6)">Alba</span><span class="tstep" onclick="setHr(12)">Mezz.</span><span class="tstep mark" onclick="setHr(19)">Tram.</span><span class="tstep" onclick="setHr(23)">Notte</span></div>
-            <p class="slabel">Filtro Spot</p>
-            <div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="chip" style="cursor:pointer" onclick="notify('🗂 Filtro: Tutti','success')">Tutti</span><span class="chip" style="cursor:pointer;background:rgba(255,165,2,.1);color:var(--orange);border-color:rgba(255,165,2,.2)" onclick="notify('⭐ Filtro: Salvati','success')">⭐ Salvati</span></div>
+<div class="page-wrap">
+  <!-- CONFIGURATION PANEL (LEFT) -->
+  <aside class="config-panel">
+    
+    <!-- Card 1: Search and Actions -->
+    <div class="card">
+        <h2 class="card-title">Cerca e Azioni Rapide</h2>
+        <div class="search-wrap">
+          <div class="search-bar"><span>🔍</span><input type="text" id="searchInput" placeholder="Cerca luogo, montagna, lago…" autocomplete="off"></div>
+          <div class="search-results" id="searchResults"></div>
         </div>
-        <!-- METEO PANEL -->
-        <div class="panel" id="panel-meteo"><div id="wcc"><div class="wcard fi-anim"><div class="wch"><span>🌍</span><span class="wct">Dati Meteo Reali</span><span class="wcs sl">Clicca mappa</span></div><p style="font-size:12px;color:var(--text-muted);line-height:1.65">Clicca su <b>qualsiasi punto della mappa</b> per caricare i dati meteo da <b>Open-Meteo</b>.</p></div></div></div>
-        <!-- AI PANEL -->
-        <div class="panel" id="panel-assistant">
-        <div id="ai-content-wrapper">
-            <div class="wcard">
-                <div class="wch"><span>✨</span><span class="wct">Assistente Fotografico AI</span></div>
-                <p style="font-size:12px;color:var(--text-muted);line-height:1.65">
-                    Per iniziare, <b>clicca su un punto della mappa</b> per caricare i dati meteo, poi dal pannello "Meteo" clicca su <b>"Chiedi all'AI"</b>.
-                </p>
-            </div>
+        <div class="action-buttons">
+          <button class="action-btn" onclick="locateMe()" title="Trova la mia posizione (L)">◎<span class="action-label">Posizione</span></button>
+          <button class="action-btn" onclick="startAddSpot()" title="Aggiungi un nuovo spot">📍<span class="action-label">Aggiungi Spot</span></button>
+          <button class="action-btn" id="sunBtn" onclick="toggleSunTool()" title="Mostra/nascondi strumento sole (S)">☀️<span class="action-label">Sole</span></button>
         </div>
-
-        <!-- ALERTS PANEL -->
-        <div class="panel" id="panel-alerts"><div id="alertsList"></div><button class="add-btn" onclick="showAlertModal()">+ Aggiungi Allerta</button></div>
-        <!-- FEED PANEL -->
-        <div class="panel" id="panel-feed"><div style="display:flex;gap:5px;margin-bottom:12px;"><span class="chip" style="cursor:pointer;background:rgba(232,240,60,.12);border-color:var(--accent)">📍 Locale</span><span class="chip" style="cursor:pointer">👥 Seguiti</span></div></div>
-      </div>
     </div>
-    <div class="stoggle" id="stoggle" onclick="toggleSidebar()">◀</div>
+    
+    <!-- Card 2: Forecast Settings -->
+    <div class="card">
+        <h2 class="card-title">Parametri Previsione</h2>
+        <p class="slabel">Sorgente Dati</p>
+        <div class="mo active" onclick="selModel(this,'Europa Centrale')"><div class="mo-name">Europa Centrale</div><div class="mo-det">2,2 km · 24h · ogni 3h</div></div>
+        <div class="mo" onclick="selModel(this,'Europa')"><div class="mo-name">Europa</div><div class="mo-det">7 km · 72h · ogni 3h</div></div>
+        
+        <p class="slabel">Parametro Meteo</p>
+        <div class="pgrid">
+          <div class="pc active" onclick="selParam(this,'cloud_cover_low','Cielo Rosso','rg')"><div class="pi">🔴</div><div class="pn">Cielo Rosso</div></div>
+          <div class="pc" onclick="selParam(this,'visibility','Nebbia','bw')"><div class="pi">🌫</div><div class="pn">Nebbia</div></div>
+          <div class="pc" onclick="selParam(this,'precipitation_probability','Temporale','pu')"><div class="pi">⛈</div><div class="pn">Temporale</div></div>
+          <div class="pc" onclick="selParam(this,'cloud_cover','Cielo Notturno','in')"><div class="pi">🌙</div><div class="pn">Cielo Notturno</div></div>
+          <div class="pc" onclick="selParam(this,'direct_radiation','Alba/Tramonto','or')"><div class="pi">🌅</div><div class="pn">Alba/Tramonto</div></div>
+          <div class="pc" onclick="selParam(this,'shortwave_radiation','Contrasto','ye')"><div class="pi">☀️</div><div class="pn">Contrasto</div></div>
+          <div class="pc" onclick="selParam(this,'wind_speed_10m','Riflesso','te')"><div class="pi">🌊</div><div class="pn">Riflesso</div></div>
+          <div class="pc" onclick="selParam(this,'cloud_cover_high','Ora Blu','bl')"><div class="pi">🌌</div><div class="pn">Ora Blu</div></div>
+        </div>
+        
+        <p class="slabel">Orario Previsione</p>
+        <div class="td" id="timeDisplay">06:00</div>
+        <div class="tdate" id="timeDate">—</div>
+        <input type="range" min="0" max="71" value="6" id="timeSlider" oninput="onTime(this.value)">
+        <div class="tsteps"><span class="tstep mark" onclick="setHr(6)">Alba</span><span class="tstep" onclick="setHr(12)">Mezz.</span><span class="tstep mark" onclick="setHr(19)">Tram.</span><span class="tstep" onclick="setHr(23)">Notte</span></div>
+    </div>
+  </aside>
 
-    <div class="map-area">
+  <!-- MAP & RESULTS AREA (RIGHT) -->
+  <main class="results-area">
+    <div class="map-container">
       <div id="lmap"></div>
       <canvas id="heatCanvas"></canvas>
       <div class="mapbar">
@@ -93,7 +75,6 @@
       </div>
       <div class="mapbottom">
         <div class="legend"><div class="legtit" id="legTitle">Prob. Cielo Rosso</div><div class="legbar" id="legBar"></div><div class="leglabs"><span class="legl">0%</span><span class="legl">50%</span><span class="legl">100%</span></div></div>
-        <div class="mtools"><button class="mtbtn" id="sunBtnMap" onclick="toggleSunTool()">☀</button><button class="mtbtn" onclick="locateMe()">◎</button></div>
       </div>
       <div class="spdet" id="spdet">
           <div class="closebtn" onclick="closeSpot()">✕</div><div class="sphoto" id="sphoto">📍</div>
@@ -101,14 +82,34 @@
           <div class="spinfo"><div class="spname" id="spname">—</div><div class="spmeta" id="spmeta"></div><div class="spwlist" id="spwlist"></div><div class="ratrow"><button class="ratbtn" onclick="notify('👍 Grazie!','success')">👍 Rilevante</button><button class="ratbtn" onclick="notify('🌿 Info natura OK','success')">🌿 Natura OK</button></div></div>
       </div>
     </div>
-  </div>
 
-  <div class="moverlay" id="alertModal" onclick="closeMod('alertModal',event)"><div class="modal"><div class="mtitle">Nuova Allerta</div><div class="msub">Ricevi notifiche per questa regione</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="alertName" placeholder="es. Dolomiti"></div><div class="fg"><label class="fl">Fenomeni</label><div class="tgroup"><div class="trow"><span>🔴</span><span class="tname">Cielo Rosso</span><div class="tsw" onclick="this.classList.toggle('off')"></div></div></div></div><div class="mact"><button class="bsec" onclick="closeMod('alertModal')">Annulla</button><button class="bprim" onclick="saveAlert()">Salva</button></div></div></div>
-  <div class="moverlay" id="spotModal" onclick="closeMod('spotModal',event)"><div class="modal"><div class="mtitle">Aggiungi Spot</div><div class="msub" id="spotModalSub">Clicca sulla mappa per posizionare</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="newSpotName" placeholder="Nome luogo"></div><div class="fg"><label class="fl">Tipo</label><select class="fi" id="newSpotType"><option>🏔 Montagna</option><option>🌊 Lago</option><option>🌅 Colline</option><option>🏙 Città</option><option>🌲 Foresta</option><option>🏖 Costa</option></select></div><div class="mact"><button class="bsec" onclick="closeMod('spotModal')">Annulla</button><button class="bprim" onclick="saveSpot()">Aggiungi</button></div></div></div>
+    <div class="output-cards-container">
+        <!-- Card 3: Weather Details -->
+        <div class="card" id="weather-output-card">
+          <div id="weather-card-content">
+            <div class="wch"><span>🌍</span><span class="wct">Dati Meteo</span></div>
+            <p class="placeholder-text">Clicca su <b>qualsiasi punto della mappa</b> per caricare i dati meteo.</p>
+          </div>
+        </div>
 
-  <div class="toast" id="toast"><span id="toastMsg">—</span></div>
-  
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-  <script src="main.js"></script>
+        <!-- Card 4: AI Assistant -->
+        <div class="card" id="assistant-output-card">
+          <div id="assistant-card-content">
+            <div class="wch"><span>✨</span><span class="wct">Assistente Fotografico AI</span></div>
+            <p class="placeholder-text">
+                Dopo aver caricato i dati, clicca su <b>"Chiedi all'AI"</b> nel pannello meteo.
+            </p>
+          </div>
+        </div>
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div class="moverlay" id="spotModal" onclick="closeMod('spotModal',event)"><div class="modal"><div class="mtitle">Aggiungi Spot</div><div class="msub" id="spotModalSub">Clicca sulla mappa per posizionare</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="newSpotName" placeholder="Nome luogo"></div><div class="fg"><label class="fl">Tipo</label><select class="fi" id="newSpotType"><option>🏔 Montagna</option><option>🌊 Lago</option><option>🌅 Colline</option><option>🏙 Città</option><option>🌲 Foresta</option><option>🏖 Costa</option></select></div><div class="mact"><button class="bsec" onclick="closeMod('spotModal')">Annulla</button><button class="bprim" onclick="saveSpot()">Aggiungi</button></div></div></div>
+<div class="toast" id="toast"><span id="toastMsg">—</span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
