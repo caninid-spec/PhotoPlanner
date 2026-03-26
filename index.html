@@ -1,314 +1,114 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0d1117" />
-  <meta name="description" content="Pianificatore fotografico all-in-one: meteo, sole, luna, mappe e permessi." />
-  <title>PhotoScout — Pianificatore Scatti</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoWeather — Previsioni per Fotografi</title>
 
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" href="assets/icon-192.png" type="image/png" />
-  <link rel="apple-touch-icon" href="assets/icon-192.png" />
-
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-
-  <!-- CORREZIONE: il percorso del file CSS era errato (puntava a 'style.css' nella root invece che in 'css/style.css') -->
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="manifest" href="manifest.json">
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header class="site-header">
-    <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">⬡</span>
-        <span class="logo-text">PhotoScout</span>
-      </div>
-      <nav class="main-nav">
-        <button class="nav-btn active" data-section="dashboard">Dashboard</button>
-        <button class="nav-btn" data-section="map">Mappa</button>
-        <button class="nav-btn" data-section="permits">Permessi</button>
-        <button class="nav-btn" data-section="ai">AI Scout</button>
-      </nav>
-      <button class="settings-btn" id="settingsBtn" title="Impostazioni">⚙</button>
-    </div>
-  </header>
-
-  <!-- SEARCH BAR -->
-  <div class="search-strip">
+  <div class="topbar">
+    <div class="logo">📷 PhotoWeather</div>
     <div class="search-wrap">
-      <input type="text" id="locationInput" class="search-input" placeholder="Cerca località... (es. Dolomiti, Lago di Como)" autocomplete="off" />
-      <button class="search-btn" id="searchBtn">Cerca</button>
-      <button class="gps-btn" id="gpsBtn" title="Usa posizione attuale">📍</button>
+      <div class="search-bar"><span>🔍</span><input type="text" id="searchInput" placeholder="Cerca luogo, montagna, lago…" autocomplete="off"></div>
+      <div class="search-results" id="searchResults"></div>
     </div>
-    <div class="current-location" id="currentLocation">Nessuna località selezionata</div>
-    <div class="search-results" id="searchResults"></div>
+    <div class="top-actions">
+      <button class="btn-icon" id="sunBtnTop" onclick="toggleSunTool()" title="Strumento sole (S)">☀️</button>
+      <button class="btn-icon" onclick="startAddSpot()" title="Aggiungi spot">📍</button>
+      <button class="btn-icon" onclick="locateMe()" title="Posizione (L)">◎</button>
+      <button class="btn-icon active">👤</button>
+    </div>
   </div>
 
-  <!-- MAIN CONTENT -->
-  <main class="main-content">
-
-    <!-- SECTION: DASHBOARD -->
-    <section id="section-dashboard" class="section active">
-
-    <!-- Golden/Blue Hour -->
-    <div class="card card-hero" id="card-golden">
-     
-      <!-- CORREZIONE: Testi tradotti in inglese -->
-      <div class="card-label">Magic Hours</div>
-      <div class="golden-grid" id="goldenHourData">
-        <div class="golden-item">
-          <span class="golden-title">🌅 Morning Golden Hour</span>
-          <span class="golden-time" id="goldenMornStart">--:--</span>
-          <span class="golden-duration" id="goldenMornDur">— min</span>
-        </div>
-        <div class="golden-item">
-          <span class="golden-title">🌃 Morning Blue Hour</span>
-          <span class="golden-time" id="blueMornStart">--:--</span>
-          <span class="golden-duration" id="blueMornDur">— min</span>
-        </div>
-        <div class="golden-item">
-          <span class="golden-title">🌇 Evening Golden Hour</span>
-          <span class="golden-time" id="goldenEveStart">--:--</span>
-          <span class="golden-duration" id="goldenEveDur">— min</span>
-        </div>
-        <div class="golden-item">
-          <span class="golden-title">🌆 Evening Blue Hour</span>
-          <span class="golden-time" id="blueEveStart">--:--</span>
-          <span class="golden-duration" id="blueEveDur">— min</span>
-        </div>
+  <div class="main">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-tabs">
+        <div class="tab active" onclick="switchTab('map')">🗺 Mappa</div>
+        <div class="tab" onclick="switchTab('meteo')">🌡 Meteo</div>
+        <div class="tab" onclick="switchTab('assistant')">✨ Assistente</div> <!-- NUOVO TAB -->
+        <div class="tab" onclick="switchTab('alerts')">🔔 Allerte</div>
+        <div class="tab" onclick="switchTab('feed')">📰 Feed</div>
       </div>
-    </div>
-
-      <!-- Sun & Moon Row -->
-      <div class="two-col">
-
-        <div class="card" id="card-sun">
-          <div class="card-label">Sole</div>
-          <div class="sun-data">
-            <div class="sun-row"><span>Alba</span><strong id="sunRise">--:--</strong></div>
-            <div class="sun-row"><span>Tramonto</span><strong id="sunSet">--:--</strong></div>
-            <div class="sun-row"><span>Mezzogiorno solare</span><strong id="sunNoon">--:--</strong></div>
-            <div class="sun-row"><span>Azimut attuale</span><strong id="sunAzimuth">--°</strong></div>
-            <div class="sun-row"><span>Elevazione</span><strong id="sunAltitude">--°</strong></div>
-          </div>
-          <canvas id="sunArcCanvas"></canvas>
-        </div>
-
-        <div class="card" id="card-moon">
-          <div class="card-label">Luna</div>
-          <div class="moon-phase-display">
-            <canvas id="moonCanvas" width="80" height="80"></canvas>
-            <div class="moon-info">
-              <div class="moon-phase-name" id="moonPhaseName">—</div>
-              <div class="moon-illumination" id="moonIllum">—</div>
+      <div class="sc">
+        <!-- MAP PANEL -->
+        <div class="panel active" id="panel-map">
+            <p class="slabel">Sorgente Dati</p>
+            <div class="mo active" onclick="selModel(this,'Europa Centrale')"><div class="mo-name">Europa Centrale</div><div class="mo-det">2,2 km · 24h · ogni 3h</div></div>
+            <div class="mo" onclick="selModel(this,'Europa')"><div class="mo-name">Europa</div><div class="mo-det">7 km · 72h · ogni 3h</div></div>
+            <p class="slabel">Parametro Meteo</p>
+            <div class="pgrid">
+              <div class="pc active" onclick="selParam(this,'cloud_cover_low','Cielo Rosso','rg')"><div class="pi">🔴</div><div class="pn">Cielo Rosso</div></div>
+              <div class="pc" onclick="selParam(this,'visibility','Nebbia','bw')"><div class="pi">🌫</div><div class="pn">Nebbia</div></div>
+              <div class="pc" onclick="selParam(this,'precipitation_probability','Temporale','pu')"><div class="pi">⛈</div><div class="pn">Temporale</div></div>
+              <div class="pc" onclick="selParam(this,'cloud_cover','Cielo Notturno','in')"><div class="pi">🌙</div><div class="pn">Cielo Notturno</div></div>
+              <div class="pc" onclick="selParam(this,'direct_radiation','Alba/Tramonto','or')"><div class="pi">🌅</div><div class="pn">Alba/Tramonto</div></div>
+              <div class="pc" onclick="selParam(this,'shortwave_radiation','Contrasto','ye')"><div class="pi">☀️</div><div class="pn">Contrasto</div></div>
+              <div class="pc" onclick="selParam(this,'wind_speed_10m','Riflesso','te')"><div class="pi">🌊</div><div class="pn">Riflesso</div></div>
+              <div class="pc" onclick="selParam(this,'cloud_cover_high','Ora Blu','bl')"><div class="pi">🌌</div><div class="pn">Ora Blu</div></div>
             </div>
-          </div>
-          <div class="sun-data">
-            <div class="sun-row"><span>Sorgere</span><strong id="moonRise">--:--</strong></div>
-            <div class="sun-row"><span>Tramontare</span><strong id="moonSet">--:--</strong></div>
-            <div class="sun-row"><span>Azimut</span><strong id="moonAzimuth">--°</strong></div>
-          </div>
+            <p class="slabel">Orario Previsione</p>
+            <div class="td" id="timeDisplay">06:00</div>
+            <div class="tdate" id="timeDate">—</div>
+            <input type="range" min="0" max="71" value="6" id="timeSlider" oninput="onTime(this.value)">
+            <div class="tsteps"><span class="tstep mark" onclick="setHr(6)">Alba</span><span class="tstep" onclick="setHr(12)">Mezz.</span><span class="tstep mark" onclick="setHr(19)">Tram.</span><span class="tstep" onclick="setHr(23)">Notte</span></div>
+            <p class="slabel">Filtro Spot</p>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;"><span class="chip" style="cursor:pointer" onclick="notify('🗂 Filtro: Tutti','success')">Tutti</span><span class="chip" style="cursor:pointer;background:rgba(255,165,2,.1);color:var(--orange);border-color:rgba(255,165,2,.2)" onclick="notify('⭐ Filtro: Salvati','success')">⭐ Salvati</span></div>
         </div>
-
-      </div>
-
-      <!-- Weather -->
-      <div class="card" id="card-weather">
-        <div class="card-label">Meteo</div>
-        <div class="weather-now" id="weatherNow">
-          <div class="weather-main">
-            <span class="weather-icon" id="weatherIcon">☁</span>
-            <div>
-              <div class="weather-temp" id="weatherTemp">--°C</div>
-              <div class="weather-desc" id="weatherDesc">Caricamento...</div>
+        <!-- METEO PANEL -->
+        <div class="panel" id="panel-meteo"><div id="wcc"><div class="wcard fi-anim"><div class="wch"><span>🌍</span><span class="wct">Dati Meteo Reali</span><span class="wcs sl">Clicca mappa</span></div><p style="font-size:12px;color:var(--text-muted);line-height:1.65">Clicca su <b>qualsiasi punto della mappa</b> per caricare i dati meteo da <b>Open-Meteo</b>.</p></div></div></div>
+        <!-- AI PANEL -->
+        <div class="panel" id="panel-assistant">
+        <div id="ai-content-wrapper">
+            <div class="wcard">
+                <div class="wch"><span>✨</span><span class="wct">Assistente Fotografico AI</span></div>
+                <p style="font-size:12px;color:var(--text-muted);line-height:1.65">
+                    Per iniziare, <b>clicca su un punto della mappa</b> per caricare i dati meteo, poi dal pannello "Meteo" clicca su <b>"Chiedi all'AI"</b>.
+                </p>
             </div>
-          </div>
-          <div class="weather-stats">
-            <div class="wstat"><span>Nuvole</span><strong id="wCloud">--%</strong></div>
-            <div class="wstat"><span>Umidità</span><strong id="wHumid">--%</strong></div>
-            <div class="wstat"><span>Vento</span><strong id="wWind">-- km/h</strong></div>
-            <div class="wstat"><span>Visibilità</span><strong id="wVis">-- km</strong></div>
-          </div>
         </div>
-        <div class="forecast-strip" id="forecastStrip"></div>
-      </div>
 
-      <!-- Cloud cover timeline -->
-      <div class="card" id="card-cloud">
-        <div class="card-label">Copertura Nuvolosa — prossime 24h</div>
-        <canvas id="cloudCanvas" height="80"></canvas>
-      </div>
-
-    </section>
-
-    <!-- SECTION: MAP -->
-    <section id="section-map" class="section">
-      <div class="card card-map-wrap">
-        <div class="card-label">
-          Mappa Locations
-          <div class="map-controls">
-            <button class="map-ctrl-btn active" data-layer="osm">Mappa</button>
-            <button class="map-ctrl-btn" data-layer="sat">Satellite</button>
-          </div>
-        </div>
-        <div id="map"></div>
-        <div class="map-legend">
-          <span class="legend-dot dot-user"></span> Tue locations
-          <span class="legend-dot dot-popular"></span> Popolari
-          <span class="legend-dot dot-permit"></span> Permesso richiesto
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-label">Aggiungi Location</div>
-        <div class="add-location-form">
-          <input type="text" id="locName" placeholder="Nome location" class="form-input" />
-          <textarea id="locDesc" placeholder="Descrizione, consigli..." class="form-input" rows="2"></textarea>
-          <select id="locType" class="form-input">
-            <option value="user">Mia location</option>
-            <option value="popular">Popolare</option>
-            <option value="permit">Richiede permesso</option>
-          </select>
-          <button class="action-btn" id="addLocBtn">Aggiungi al centro mappa</button>
-        </div>
-        <div class="saved-locations" id="savedLocations"></div>
-      </div>
-    </section>
-
-    <!-- SECTION: PERMITS -->
-    <section id="section-permits" class="section">
-      <div class="card">
-        <div class="card-label">Database Permessi Fotografici</div>
-        <div class="permit-search">
-          <input type="text" id="permitSearch" placeholder="Cerca per nome area o tipo..." class="form-input" />
-        </div>
-        <div class="permit-list" id="permitList"></div>
-      </div>
-      <div class="card">
-        <div class="card-label">Aggiungi Permesso</div>
-        <div class="add-location-form">
-          <input type="text" id="pArea" placeholder="Nome area / location" class="form-input" />
-          <select id="pType" class="form-input">
-            <option value="free">Libero accesso</option>
-            <option value="permit">Permesso richiesto</option>
-            <option value="paid">A pagamento</option>
-            <option value="forbidden">Vietato</option>
-          </select>
-          <input type="text" id="pContact" placeholder="Contatto / ente (opzionale)" class="form-input" />
-          <textarea id="pNotes" placeholder="Note aggiuntive..." class="form-input" rows="2"></textarea>
-          <button class="action-btn" id="addPermitBtn">Aggiungi al database</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION: AI SCOUT -->
-    <section id="section-ai" class="section">
-      <div class="card card-hero">
-    <div class="card-label">Configurazione AI Scout</div>
-    <div id="aiApiSetup">
-      <p style="margin-bottom: var(--gap-sm); font-size: var(--size-sm);">Inserisci la tua chiave OpenAI per attivare l'assistente fotografico.</p>
-      <div class="search-wrap">
-        <input type="password" id="openaiKey" class="search-input" placeholder="sk-..." />
-        <button class="search-btn" id="saveApiKey">Salva</button>
+        <!-- ALERTS PANEL -->
+        <div class="panel" id="panel-alerts"><div id="alertsList"></div><button class="add-btn" onclick="showAlertModal()">+ Aggiungi Allerta</button></div>
+        <!-- FEED PANEL -->
+        <div class="panel" id="panel-feed"><div style="display:flex;gap:5px;margin-bottom:12px;"><span class="chip" style="cursor:pointer;background:rgba(232,240,60,.12);border-color:var(--accent)">📍 Locale</span><span class="chip" style="cursor:pointer">👥 Seguiti</span></div></div>
       </div>
     </div>
-    
-    <div id="aiInputs" style="display:none; margin-top: var(--gap);">
-      <div class="ai-grid-inputs">
-        <div class="input-group">
-          <label>Tipo di Fotografia</label>
-          <select id="aiPhotoType" class="search-input">
-            <option value="street">Street Photography</option>
-            <option value="paesaggistica">Paesaggistica</option>
-            <option value="architettura">Architettura</option>
-            <option value="ritratto">Ritratto</option>
-            <option value="naturalistica">Naturalistica</option>
-            <option value="notturna">Notturna / Astrofotografia</option>
-          </select>
-        </div>
-        <div class="input-group">
-          <label>Raggio di ricerca (km)</label>
-          <input type="number" id="aiRadius" class="search-input" value="10" min="1" max="50">
-        </div>
-        <div class="input-group">
-          <label>Ora dello scatto</label>
-          <input type="time" id="aiShootTime" class="search-input">
-        </div>
-      </div>
-      <button class="search-btn" id="aiGenerate" style="width:100%; margin-top: var(--gap); background: var(--accent2); color: white;">
-        ✨ Genera Suggerimenti Location
-      </button>
-    </div>
-      </div>
-    
-      <div id="aiChat" class="card" style="display:none; flex:1; min-height: 400px;">
-        <div class="card-label">Risultati AI Scout</div>
-        <div id="aiMessages" class="ai-messages-container">
-          </div>
-        <div class="ai-input-area" style="margin-top: auto; padding-top: var(--gap); border-top: 1px solid var(--border);">
-          <div class="search-wrap">
-            <input type="text" id="aiInput" class="search-input" placeholder="Chiedi dettagli extra..." />
-            <button class="search-btn" id="aiSend">Invia</button>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
+    <div class="stoggle" id="stoggle" onclick="toggleSidebar()">◀</div>
 
-  <!-- SETTINGS MODAL -->
-  <div class="modal-overlay" id="settingsModal">
-    <div class="modal">
-      <div class="modal-header">
-        <span>Impostazioni</span>
-        <button class="modal-close" id="closeSettings">✕</button>
+    <div class="map-area">
+      <div id="lmap"></div>
+      <canvas id="heatCanvas"></canvas>
+      <div class="mapbar">
+        <div class="suninfo"><div class="sunit"><span>🌅</span><span id="srTime">—:—</span></div><div class="sunit"><span>🌇</span><span id="ssTime">—:—</span></div><div class="sunit"><span>🌙</span><span id="moonTxt">—</span></div></div>
+        <button class="layerbtn" onclick="cycleLayer()">🗂 <span id="layerLbl">Dark</span></button>
       </div>
-      <div class="modal-body">
-        <label class="setting-row">
-          <span>Formato ora</span>
-          <select id="timeFormat" class="form-input small">
-            <option value="24">24h</option>
-            <option value="12">12h</option>
-          </select>
-        </label>
-        <label class="setting-row">
-          <span>Unità temperatura</span>
-          <select id="tempUnit" class="form-input small">
-            <option value="C">°C</option>
-            <option value="F">°F</option>
-          </select>
-        </label>
-        <label class="setting-row">
-          <span>Modello AI</span>
-          <select id="aiModel" class="form-input small">
-            <option value="gpt-4o-mini">GPT-4o mini (veloce)</option>
-            <option value="gpt-4.1-mini">GPT-4.1 mini (avanzato)</option>
-          </select>
-        </label>
-        <label class="setting-row">
-          <span>Tema</span>
-          <select id="themeSelect" class="form-input small">
-            <option value="dark">Scuro</option>
-            <option value="light">Chiaro</option>
-          </select>
-        </label>
+      <div class="mapbottom">
+        <div class="legend"><div class="legtit" id="legTitle">Prob. Cielo Rosso</div><div class="legbar" id="legBar"></div><div class="leglabs"><span class="legl">0%</span><span class="legl">50%</span><span class="legl">100%</span></div></div>
+        <div class="mtools"><button class="mtbtn" id="sunBtnMap" onclick="toggleSunTool()">☀</button><button class="mtbtn" onclick="locateMe()">◎</button></div>
+      </div>
+      <div class="spdet" id="spdet">
+          <div class="closebtn" onclick="closeSpot()">✕</div><div class="sphoto" id="sphoto">📍</div>
+          <div class="spact"><div class="spbtn" id="bkmBtn" onclick="bookmarkSpot()">🔖</div><div class="spbtn" onclick="notify('📤 Seleziona foto','success')">📤</div><div class="spbtn" onclick="notify('✏️ Modifica spot','success')">✏️</div></div>
+          <div class="spinfo"><div class="spname" id="spname">—</div><div class="spmeta" id="spmeta"></div><div class="spwlist" id="spwlist"></div><div class="ratrow"><button class="ratbtn" onclick="notify('👍 Grazie!','success')">👍 Rilevante</button><button class="ratbtn" onclick="notify('🌿 Info natura OK','success')">🌿 Natura OK</button></div></div>
       </div>
     </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- SunCalc -->
-  <script src="https://unpkg.com/suncalc@1.9.0/suncalc.js"></script>
+  <div class="moverlay" id="alertModal" onclick="closeMod('alertModal',event)"><div class="modal"><div class="mtitle">Nuova Allerta</div><div class="msub">Ricevi notifiche per questa regione</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="alertName" placeholder="es. Dolomiti"></div><div class="fg"><label class="fl">Fenomeni</label><div class="tgroup"><div class="trow"><span>🔴</span><span class="tname">Cielo Rosso</span><div class="tsw" onclick="this.classList.toggle('off')"></div></div></div></div><div class="mact"><button class="bsec" onclick="closeMod('alertModal')">Annulla</button><button class="bprim" onclick="saveAlert()">Salva</button></div></div></div>
+  <div class="moverlay" id="spotModal" onclick="closeMod('spotModal',event)"><div class="modal"><div class="mtitle">Aggiungi Spot</div><div class="msub" id="spotModalSub">Clicca sulla mappa per posizionare</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="newSpotName" placeholder="Nome luogo"></div><div class="fg"><label class="fl">Tipo</label><select class="fi" id="newSpotType"><option>🏔 Montagna</option><option>🌊 Lago</option><option>🌅 Colline</option><option>🏙 Città</option><option>🌲 Foresta</option><option>🏖 Costa</option></select></div><div class="mact"><button class="bsec" onclick="closeMod('spotModal')">Annulla</button><button class="bprim" onclick="saveSpot()">Aggiungi</button></div></div></div>
 
-  <script src="js/sun.js"></script>
-  <script src="js/weather.js"></script>
-  <script src="js/map.js"></script>
-  <script src="js/ai.js"></script>
-  <script src="js/app.js"></script>
+  <div class="toast" id="toast"><span id="toastMsg">—</span></div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
