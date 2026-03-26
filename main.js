@@ -46,7 +46,6 @@ function cycleLayer(){
 // ══ MARKERS ══
 const markers={};
 const MCOL={Montagna:'pm-r',Lago:'pm-b',Colline:'pm-g',Città:'pm-o',Foresta:'pm-g',Costa:'pm-b'};
-
 function mkIcon(sp){
   const cls=(MCOL[sp.type]||'pm-o')+(S.saved.has(sp.id)?' pm-saved':'');
   return L.divIcon({className:'',html:`<div class="pmarker ${cls}"><span class="mi">${sp.emoji}</span></div>`,iconSize:[34,34],iconAnchor:[17,34]});
@@ -61,13 +60,15 @@ S.spots.forEach(addMarker);
 map.on('click',async e=>{
   if (S.pendingLL) return; // Se siamo in modalità "aggiungi spot", non caricare il meteo
   S.lat=e.latlng.lat; S.lon=e.latlng.lng;
+  if(S.sidebarOpen && window.innerWidth < 768) {
+      toggleSidebar(); // Chiude la sidebar su mobile dopo aver cliccato la mappa
+  }
   switchTab('meteo');
   await loadWeather(S.lat,S.lon);
 });
 
 // ══ OPEN-METEO ══
 const OM_PARAMS='temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,precipitation_probability,cloud_cover,cloud_cover_low,cloud_cover_mid,cloud_cover_high,shortwave_radiation,direct_radiation,diffuse_radiation,wind_speed_10m,wind_direction_10m,visibility,is_day';
-
 async function loadWeather(lat,lon){
   document.getElementById('wcc').innerHTML=`<div class="wcard fi-anim"><div class="wch"><span>⏳</span><span class="wct">Caricamento…</span><span class="wcs sl"><span class="spin"></span></span></div><p style="font-size:12px;color:var(--text-muted)">Open-Meteo API in corso…</p></div>`;
   try{
@@ -93,11 +94,14 @@ async function loadWeather(lat,lon){
 function hIdx(d){return Math.min(S.timeHour,(d.hourly?.time?.length||72)-1);}
 
 // ==========================================================
-// NUOVA FUNZIONE PER CHIAMARE IL TUO WORKER CLOUDFLARE
+// FUNZIONE PER CHIAMARE IL WORKER CLOUDFLARE
 // ==========================================================
 async function getAIAdvice(locationName, weatherSummary, time) {
-    // 1. Passa alla vista "Assistente" e mostra un caricamento
+    if(S.sidebarOpen && window.innerWidth < 768) {
+      toggleSidebar(); // Chiude la sidebar se aperta su mobile
+    }
     switchTab('assistant');
+
     document.getElementById('ai-content-wrapper').innerHTML = `
         <div class="wcard fi-anim">
             <div class="wch"><span>⏳</span><span class="wct">L'assistente AI sta pensando...</span><span class="wcs sl"><span class="spin"></span></span></div>
@@ -106,35 +110,24 @@ async function getAIAdvice(locationName, weatherSummary, time) {
     `;
 
     try {
-        // --- INSERISCI QUI L'URL DEL TUO WORKER ---
         const WORKER_URL = 'https://tuo-worker.tuo-dominio.workers.dev'; // <-- METTI QUI IL TUO URL
-        // -----------------------------------------
-
         const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ locationName, weatherSummary, time }),
         });
-
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || `Errore del worker: ${response.status}`);
         }
-
         const { result } = await response.json();
-
-        // 3. Mostra la risposta formattata
-        const formattedResult = result
-                                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
-                                .replace(/\n/g, '<br>');
-
+        const formattedResult = result.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         document.getElementById('ai-content-wrapper').innerHTML = `
             <div class="wcard fi-anim">
                 <div class="wch"><span>💡</span><span class="wct">Consigli per ${locationName}</span></div>
                 <div style="font-size:13px; line-height:1.7; color: var(--text);">${formattedResult}</div>
             </div>
         `;
-
     } catch (error) {
         document.getElementById('ai-content-wrapper').innerHTML = `
             <div class="wcard fi-anim">
@@ -144,7 +137,6 @@ async function getAIAdvice(locationName, weatherSummary, time) {
         `;
     }
 }
-
 
 // ==========================================================
 // FUNZIONE RENDERWEATHER MODIFICATA
@@ -158,8 +150,6 @@ function renderWeather(d, place) {
     const contrast = clamp((dr > 200 ? 80 : dr > 50 ? 50 : 10) + (ct < 30 ? 20 : 0));
     const refl = clamp(100 - (ws > 10 ? 70 : ws > 5 ? 40 : ws > 2 ? 20 : 5) - (pr > 0.5 ? 30 : 0));
     const tl = h.time?.[i]?.split('T')[1]?.slice(0, 5) || '--:--';
-
-    // MODIFICA: Crea un riassunto testuale per l'AI
     const weatherSummaryForAI = `
 - Temperatura: ${tmp.toFixed(1)}°C
 - Copertura nuvolosa: ${ct}% (${cl}% basse, ${h.cloud_cover_mid?.[i]??0}% medie, ${ch}% alte)
@@ -167,13 +157,9 @@ function renderWeather(d, place) {
 - Vento: ${ws.toFixed(0)} km/h
 - Visibilità: ${(vis / 1000).toFixed(1)} km
 - Radiazione solare diretta: ${dr} W/m²`;
-
-    // MODIFICA: Aggiunto il pulsante "Chiedi all'AI"
     const htmlContent = `
         <div class="wcard fi-anim">
-            <div class="wch">
-                <span>📍</span><span class="wct" style="font-size:12px">${place}</span><span class="wcs ok">Live</span>
-            </div>
+            <div class="wch"><span>📍</span><span class="wct" style="font-size:12px">${place}</span><span class="wcs ok">Live</span></div>
             <div class="wgrid">
                 <div class="wmet"><div class="wml">Temp.</div><div class="wmv">${tmp.toFixed(1)}<span class="wmu">°C</span></div></div>
                 <div class="wmet"><div class="wml">Vento</div><div class="wmv">${ws.toFixed(0)}<span class="wmu">km/h</span></div></div>
@@ -190,10 +176,8 @@ function renderWeather(d, place) {
                 ✨ Chiedi all'AI
             </button>
         </div>`;
-
     document.getElementById('wcc').innerHTML = htmlContent;
 }
-
 
 function clamp(v){return Math.round(Math.max(0,Math.min(100,v)));}
 function sb(lbl,p){const c=p>70?'var(--green)':p>40?'var(--orange)':'var(--red)'; return `<div class="srow"><span class="slbl">${lbl}</span><div class="sbar"><div class="sfill" style="width:${p}%;background:${c}"></div></div><span class="spct" style="color:${c}">${p}%</span></div>`;}
@@ -231,7 +215,6 @@ function drawHeat(d){
   }
 }
 map.on('moveend',()=>{if(S.weatherData)drawHeat(S.weatherData);});
-window.addEventListener('resize',()=>{map.invalidateSize(); if(S.weatherData)setTimeout(()=>drawHeat(S.weatherData),100);});
 
 // ══ SEARCH ══
 let sdTimer=null, sdCtrl=null;
@@ -324,11 +307,74 @@ function onTime(v){ S.timeHour=parseInt(v); const d=new Date(BD.getTime()+S.time
 function setHr(h){document.getElementById('timeSlider').value=h;onTime(h);}
 function toggleSunTool(){ S.sunOn=!S.sunOn; ['sunBtnTop','sunBtnMap'].forEach(id=>document.getElementById(id).classList.toggle('active',S.sunOn)); if(S.sunOn){drawSun();notify('☀️ Strumento sole attivo','success');}else{if(S.sunMarker)map.removeLayer(S.sunMarker);if(S.sunLineLayer)map.removeLayer(S.sunLineLayer);S.sunMarker=null;S.sunLineLayer=null;} }
 function drawSun(){ if(!S.sunOn)return; if(S.sunMarker)map.removeLayer(S.sunMarker); if(S.sunLineLayer)map.removeLayer(S.sunLineLayer); const hr=S.timeHour%24, az=((hr-6)/12)*180, r2d=Math.PI/180, dist=0.07; const slat=S.lat+dist*Math.cos(az*r2d), slon=S.lon+dist*Math.sin(az*r2d); S.sunMarker=L.marker([slat,slon],{icon:L.divIcon({className:'',html:'<div style="background:#ffa502;width:18px;height:18px;border-radius:50%;box-shadow:0 0 12px #ffa502"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map); S.sunLineLayer=L.polyline([[S.lat,S.lon],[slat,slon]],{color:'rgba(255,165,2,.5)',weight:2,dashArray:'5,5'}).addTo(map); }
-function toggleSidebar(){ S.sidebarOpen=!S.sidebarOpen; document.getElementById('sidebar').classList.toggle('collapsed',!S.sidebarOpen); const t=document.getElementById('stoggle'); t.textContent=S.sidebarOpen?'◀':'▶'; t.style.left=S.sidebarOpen?'290px':'0'; setTimeout(()=>map.invalidateSize(),260); }
-function switchTab(tab){ S.tab=tab; document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active'); document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('panel-'+tab)?.classList.add('active');}
+
+// ==========================================================
+// FUNZIONE TOGGLESIDEBAR OTTIMIZZATA PER MOBILE E DESKTOP
+// ==========================================================
+function toggleSidebar(){
+    S.sidebarOpen = !S.sidebarOpen;
+    const sidebar = document.getElementById('sidebar');
+    const stoggle = document.getElementById('stoggle');
+
+    if (window.innerWidth < 768) {
+        // Comportamento Mobile: usa la classe 'open' e cambia icona
+        sidebar.classList.toggle('open', S.sidebarOpen);
+        stoggle.innerHTML = S.sidebarOpen ? '✕' : '☰';
+        stoggle.style.left = S.sidebarOpen ? 'auto' : '10px';
+        stoggle.style.right = S.sidebarOpen ? '10px' : 'auto';
+    } else {
+        // Comportamento Desktop: usa la classe 'collapsed' e le frecce
+        sidebar.classList.toggle('collapsed', !S.sidebarOpen);
+        stoggle.textContent = S.sidebarOpen ? '◀' : '▶';
+        stoggle.style.left = S.sidebarOpen ? '290px' : '0px';
+        stoggle.style.right = 'auto'; // Assicura che non ci sia uno stile 'right' su desktop
+        setTimeout(() => map.invalidateSize(), 260); // Aggiorna la mappa solo su desktop
+    }
+}
+
+// Funzione per inizializzare lo stato della sidebar al caricamento e al resize
+function initSidebar() {
+    const stoggle = document.getElementById('stoggle');
+    const sidebar = document.getElementById('sidebar');
+
+    if (window.innerWidth < 768) {
+        S.sidebarOpen = false; // Su mobile, parte sempre chiusa
+        sidebar.classList.remove('open');
+        sidebar.classList.remove('collapsed'); // Rimuovi per sicurezza
+        stoggle.innerHTML = '☰';
+        stoggle.style.left = '10px';
+        stoggle.style.right = 'auto';
+    } else {
+        S.sidebarOpen = true; // Su desktop, parte sempre aperta
+        sidebar.classList.remove('collapsed');
+        sidebar.classList.remove('open'); // Rimuovi per sicurezza
+        stoggle.textContent = '◀';
+        stoggle.style.left = '290px';
+        stoggle.style.right = 'auto';
+    }
+}
+
+
+function switchTab(tab){
+    S.tab=tab;
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('panel-'+tab)?.classList.add('active');
+    
+    // Se siamo su mobile e apriamo un tab, chiudiamo la sidebar per vedere il contenuto
+    if (window.innerWidth < 768 && S.sidebarOpen && (tab === 'meteo' || tab === 'assistant')) {
+        toggleSidebar();
+    }
+}
+
 function showAlertModal(){document.getElementById('alertModal').classList.add('open');}
 function closeMod(id,e){if(!e||e.target.id===id)document.getElementById(id).classList.remove('open');}
 function saveAlert(){ const name=document.getElementById('alertName').value.trim()||'Nuova Regione'; closeMod('alertModal'); notify(`🔔 Allerta "${name}" creata!`,'success'); document.getElementById('alertName').value=''; }
 let tTimer; function notify(msg,type){ clearTimeout(tTimer); const t=document.getElementById('toast'); t.className='toast show '+(type||''); t.querySelector('#toastMsg').textContent=msg; tTimer=setTimeout(()=>t.classList.remove('show'),3000); }
-document.addEventListener('keydown',e=>{ if(document.activeElement.tagName==='INPUT')return; const K={s:toggleSunTool,l:locateMe,1:()=>switchTab('map'),2:()=>switchTab('meteo'),3:()=>switchTab('alerts'),4:()=>switchTab('feed'),Escape:()=>{closeSpot();closeMod('alertModal');closeMod('spotModal');hideRes();}}; K[e.key]?.();});
-onTime(6); // Init
+document.addEventListener('keydown',e=>{ if(document.activeElement.tagName==='INPUT')return; const K={s:toggleSunTool,l:locateMe,1:()=>switchTab('map'),2:()=>switchTab('meteo'),3:()=>switchTab('assistant'), 4:()=>switchTab('alerts'), 5:()=>switchTab('feed'),Escape:()=>{closeSpot();closeMod('alertModal');closeMod('spotModal');hideRes();}}; K[e.key]?.();});
+
+// ══ INIZIALIZZAZIONE ══
+onTime(6);
+initSidebar();
+window.addEventListener('resize', initSidebar);
