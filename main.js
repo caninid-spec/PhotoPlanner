@@ -7,7 +7,7 @@
   // 1. SERVICE WORKER
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('./service-worker.js')
         .then(reg => console.log('Service Worker registrato:', reg))
         .catch(err => console.log('Registrazione Service Worker fallita:', err));
     });
@@ -80,7 +80,7 @@
         <p class="placeholder-text">Sto analizzando le condizioni per <b>${locationName}</b>...</p>
     `;
     try {
-        const WORKER_URL = 'photoscoutai.canini-d.workers.dev'; // <-- METTI QUI IL TUO URL
+        const WORKER_URL = 'https://photoscoutai.canini-d.workers.dev';
         const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
