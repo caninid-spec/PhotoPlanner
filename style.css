@@ -13,45 +13,38 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height
 /* ==================================== */
 
 /* TOPBAR */
-.topbar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);z-index:1000;flex-shrink:0;}
+.topbar{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);z-index:1100;flex-shrink:0;}
 .logo{font-size:15px;font-weight:800;color:var(--accent); white-space:nowrap;}
 .search-wrap{flex:1;min-width:0;position:relative;}
 .search-bar{width:100%;display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;gap:8px;}
-.search-bar:focus-within{border-color:var(--accent);}
 .search-bar input{background:none;border:none;outline:none;color:var(--text);font-family:'Syne',sans-serif;font-size:13px;width:100%;}
-.search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:2000;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;}
-.sri{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;}
-.sri:last-child{border-bottom:none;}
-.sri:hover{background:var(--surface2);}
-.sri-name{font-weight:600;}
-.sri-sub{font-size:11px;color:var(--text-muted);}
+.search-results{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:2000;display:none;}
+.sri{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;}
+.sri:last-child{border-bottom:none;} .sri:hover{background:var(--surface2);}
 .top-actions{display:flex;gap:5px;margin-left:auto;}
-.btn-icon{width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:all .2s; flex-shrink:0;}
-.btn-icon:hover{border-color:var(--accent);color:var(--accent);}
-.btn-icon.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.btn-icon{width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
 
 /* LAYOUT */
 .main{display:flex;flex:1;overflow:hidden;position:relative;}
 
-/* SIDEBAR MOBILE */
+/* SIDEBAR MOBILE (Overlay) */
 .sidebar{
-  position:absolute;
-  top:0; bottom:0; left:0;
-  width:100%;
+  position:absolute; top:0; bottom:0; left:0;
+  width: 290px; /* Larghezza fissa */
+  max-width: 90%; /* Limite per schermi molto piccoli */
   background:var(--surface);
   display:flex; flex-direction:column;
-  overflow:hidden;
   z-index:1600;
   transform: translateX(-100%);
   transition: transform .3s ease;
   border-right:1px solid var(--border);
 }
-.sidebar.open{
-  transform: translateX(0);
-}
+.sidebar.open{ transform: translateX(0); }
+
+/* Toggle Button */
 .stoggle{
   position:absolute; top:10px; left:10px;
-  z-index:1700; /* Sopra la mappa, ma sotto la sidebar quando è aperta */
+  z-index:1500;
   width:40px; height:40px;
   background:rgba(18, 21, 28, 0.85);
   border:1px solid var(--border);
@@ -64,70 +57,56 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height
 .tab{flex:1;padding:12px 4px;text-align:center;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 .sc{flex:1;overflow-y:auto;padding:14px;}
-.sc::-webkit-scrollbar{width:3px;}
-.sc::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 .panel{display:none;}
 .panel.active{display:block;}
 
-/* MAP AREA */
-.map-area{flex:1;position:relative;}
-#lmap{width:100%;height:100%;}
+/* MAP AREA - DEVE OCCUPARE SEMPRE TUTTO LO SPAZIO */
+.map-area{flex:1;width:100%;height:100%;position:relative;}
+#lmap{width:100%;height:100%;background:#0d1117;}
 .leaflet-tile-pane{filter:brightness(.72) saturate(.4);}
-.leaflet-container{background:#0d1117;}
 
 /* MAP OVERLAYS */
-.mapbar{position:absolute;top:0;left:0;right:0;padding:10px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:800;pointer-events:none;}
+.mapbar{position:absolute;top:0;right:0;padding:10px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:800;pointer-events:none;}
 .mapbar>*{pointer-events:all;}
-.suninfo{display:flex;gap:10px;background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;padding:7px 12px;backdrop-filter:blur(8px);font-family:'Space Mono',monospace;font-size:11px; align-self: flex-start;}
-.sunit{display:flex;align-items:center;gap:5px;}
-.layerbtn{background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text-muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:11px;font-weight:600;backdrop-filter:blur(8px);display:flex;align-items:center;gap:5px;}
+.suninfo{display:flex;gap:10px;background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;padding:7px 12px;backdrop-filter:blur(8px);font-family:'Space Mono',monospace;font-size:11px;}
+.layerbtn{background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;padding:7px 11px;color:var(--text-muted);cursor:pointer;font-weight:600;}
 
 .mapbottom{position:absolute;bottom:0;left:0;right:0;padding:10px;display:flex;align-items:flex-end;gap:10px;z-index:800;pointer-events:none;}
 .mapbottom>*{pointer-events:all;}
 .legend{background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;padding:9px 12px;backdrop-filter:blur(8px); flex:1;}
-.legtit{font-size:9px;color:var(--text-muted);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;font-weight:700;}
+.legtit{font-size:9px;color:var(--text-muted);margin-bottom:6px;font-weight:700;}
 .legbar{height:8px;width:100%;border-radius:4px;}
 .leglabs{display:flex;justify-content:space-between;margin-top:3px;}
-.legl{font-size:9px;color:var(--text-dim);font-family:'Space Mono',monospace;}
 .mtools{display:flex;flex-direction:column;gap:5px;margin-left:auto;}
 .mtbtn{width:40px;height:40px;background:rgba(10,12,16,.88);border:1px solid var(--border);border-radius:8px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;}
-.mtbtn.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}
+.mtbtn.active{background:var(--accent);color:var(--bg);}
 
 /* SPOT DETAIL MOBILE */
 .spdet{
   position:absolute; bottom:0; left:0; right:0;
-  max-height: 85vh;
-  background:var(--surface);
-  border-top:1px solid var(--border);
-  border-radius:16px 16px 0 0;
-  z-index:900;box-shadow:0 -10px 40px rgba(0,0,0,.65);
-  transform:translateY(100%);
-  transition:transform .3s cubic-bezier(.16,1,.3,1);
+  max-height: 85vh; background:var(--surface);
+  border-top:1px solid var(--border); border-radius:16px 16px 0 0;
+  z-index:900; box-shadow:0 -10px 40px rgba(0,0,0,.65);
+  transform:translateY(100%); transition:transform .3s cubic-bezier(.16,1,.3,1);
   display: flex; flex-direction: column;
 }
 .spdet.open{transform:translateY(0);}
-.sphoto{width:100%;height:150px;background:linear-gradient(135deg,#1a1e28,#252a38);display:flex;align-items:center;justify-content:center;font-size:44px;position:relative; flex-shrink:0;}
+.sphoto{width:100%;height:150px;background:linear-gradient(135deg,#1a1e28,#252a38);display:flex;align-items:center;justify-content:center;font-size:44px;position:relative;flex-shrink:0;}
 .spact{position:absolute;top:10px;right:10px;display:flex;gap:8px;}
-.spbtn{width:36px;height:36px;background:rgba(10,12,16,.8);border:1px solid rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;backdrop-filter:blur(6px);}
-.closebtn{position:absolute;top:10px;left:10px;width:32px;height:32px;background:rgba(10,12,16,.8);border:1px solid rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;backdrop-filter:blur(6px);z-index:5;}
+.spbtn{width:36px;height:36px;background:rgba(10,12,16,.8);border:1px solid rgba(255,255,255,.1);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.closebtn{position:absolute;top:10px;left:10px;width:32px;height:32px;background:rgba(10,12,16,.8);border:1px solid rgba(255,255,255,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;}
 .spinfo{padding:14px; overflow-y:auto;}
 .spname{font-size:16px;font-weight:800;margin-bottom:5px;}
 .spmeta{display:flex;gap:5px;margin-bottom:9px;flex-wrap:wrap;}
 .sptag{font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--text-muted);}
-.spwlist{display:flex;flex-direction:column;gap:5px;margin-bottom:9px;}
 
 /* MODALS */
 .moverlay{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s; padding:10px;}
 .moverlay.open{opacity:1;pointer-events:all;}
 .modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;width:100%;max-width:360px;transform:translateY(18px);transition:transform .3s cubic-bezier(.16,1,.3,1);}
 .moverlay.open .modal{transform:translateY(0);}
-.mtitle{font-size:17px;font-weight:800;margin-bottom:4px;}
-.msub{font-size:12px;color:var(--text-muted);margin-bottom:18px;}
 
-/* Altri stili (wcard, form, toast etc.) sono già abbastanza responsivi e non necessitano di modifiche drastiche */
-/* ... incolla qui il resto dei tuoi stili da .wcard fino alla fine, se necessario... */
-/* (Il codice fornito qui è completo e dovrebbe già contenere tutto) */
-
+/* Altri stili (wcard, form, toast etc.) */
 .wcard{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
 .wch{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .wct{font-size:13px;font-weight:700;flex:1;}
@@ -137,15 +116,15 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height
 .er{background:rgba(255,71,87,.12);color:var(--red);border:1px solid rgba(255,71,87,.25);}
 .wgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
 .wmet{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:8px 10px;}
-.wml{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+.wml{font-size:9px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
 .wmv{font-size:16px;font-weight:800;font-family:'Space Mono',monospace;}
-.wmu{font-size:10px;color:var(--text-muted);font-weight:400;}
+.wmu{font-size:10px;color:var(--text-muted);}
 .srow{display:flex;align-items:center;gap:8px;margin-top:8px;}
 .slbl{font-size:11px;font-weight:700;color:var(--text-muted);flex:1;}
 .sbar{flex:2;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
 .sfill{height:100%;border-radius:3px;transition:width .5s ease;}
 .spct{font-size:11px;font-weight:700;font-family:'Space Mono',monospace;min-width:30px;text-align:right;}
-.bprim{flex:1;padding:11px;background:var(--accent);color:var(--bg);border:none;border-radius:7px;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;}
+.bprim{width:100%; padding:11px;background:var(--accent);color:var(--bg);border:none;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer;}
 .bprim:hover{background:#d4da38;}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(70px);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:10px 18px;font-size:12px;font-weight:600;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.5);transition:transform .3s;white-space:nowrap;}
 .toast.show{transform:translateX(-50%) translateY(0);}
@@ -170,59 +149,34 @@ body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;height
 @media (min-width: 768px) {
   .logo { font-size: 17px; }
   .topbar { padding: 10px 16px; gap: 12px; }
-  .btn-icon { width: 34px; height: 34px; font-size: 15px; }
 
-  /* Riporta la sidebar al suo stato originale */
+  /* Riporta la sidebar al suo stato originale a fianco della mappa */
   .sidebar {
     position: static;
     transform: none;
     width: 290px;
+    max-width: none;
     transition: width .25s ease;
   }
-  .sidebar.collapsed {
-    width: 0;
-    border-right: none;
-  }
+  .sidebar.collapsed { width: 0; border-right: none; }
 
-  /* Posiziona il toggle per la sidebar desktop */
+  /* Nascondi il toggle hamburger e mostra quello a freccia */
   .stoggle {
-    position: absolute;
-    top: 50%;
-    left: 290px;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 40px;
-    border: 1px solid var(--border);
-    border-left: none;
-    border-radius: 0 6px 6px 0;
-    font-size: 9px;
-    transition: left .25s ease;
-    display: flex; /* Assicura che sia visibile */
+    position: absolute; top: 50%; left: 290px; transform: translateY(-50%);
+    width: 16px; height: 40px; border-radius: 0 6px 6px 0;
+    font-size: 9px; transition: left .25s ease;
   }
-  .sidebar.collapsed + .stoggle {
-    left: 0;
-  }
+  .sidebar.collapsed + .stoggle { left: 0; }
   
   .mapbar { flex-direction: row; align-items: center; }
   .suninfo { align-self: auto; }
 
   /* Riporta il pannello dettagli a destra */
   .spdet {
-    top: 56px;
-    right: 12px;
-    bottom: auto;
-    left: auto;
-    width: 272px;
-    max-height: none;
-    border: 1px solid var(--border);
-    border-radius: 13px;
+    top: 56px; right: 12px; bottom: auto; left: auto;
+    width: 272px; max-height: none;
+    border: 1px solid var(--border); border-radius: 13px;
     transform: translateX(310px);
-    transition: transform .3s cubic-bezier(.16,1,.3,1);
   }
-  .spdet.open {
-    transform: translateX(0);
-  }
-  .sphoto { height: 140px; }
-  .spinfo { overflow-y: visible; }
+  .spdet.open { transform: translateX(0); }
 }
-
