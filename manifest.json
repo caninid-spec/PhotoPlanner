@@ -3,6 +3,7 @@
   "short_name": "PhotoWeather",
   "description": "Previsioni meteorologiche per fotografi, con analisi AI.",
   "start_url": "/PhotoPlanner/",
+  "scope": "/PhotoPlanner/",
   "display": "standalone",
   "background_color": "#0a0c10",
   "theme_color": "#12151c",

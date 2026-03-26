@@ -7,7 +7,9 @@
   // 1. SERVICE WORKER
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
+      navigator.serviceWorker.register('/PhotoPlanner/service-worker.js', {
+        scope: '/PhotoPlanner/'
+      })
         .then(reg => console.log('Service Worker registrato:', reg))
         .catch(err => console.log('Registrazione Service Worker fallita:', err));
     });
