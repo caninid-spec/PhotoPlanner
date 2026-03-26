@@ -7,11 +7,11 @@ const CACHE_NAME = 'photoweather-cache-v1';
 // App Shell: The essential files needed for the app to run.
 // I have updated this list to include your specific icon files.
 const FILES_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/main.js',
-  '/manifest.json',
+  '/PhotoPlanner/',
+  '/PhotoPlanner/index.html',
+  '/PhotoPlanner/style.css',
+  '/PhotoPlanner/main.js',
+  '/PhotoPlanner/manifest.json',
   '/icons/android-chrome-192x192.png',
   '/icons/android-chrome-512x512.png',
   '/icons/apple-touch-icon.png',
