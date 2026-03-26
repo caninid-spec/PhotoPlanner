@@ -80,7 +80,7 @@
         <p class="placeholder-text">Sto analizzando le condizioni per <b>${locationName}</b>...</p>
     `;
     try {
-        const WORKER_URL = 'https://tuo-worker.tuo-dominio.workers.dev'; // <-- METTI QUI IL TUO URL
+        const WORKER_URL = 'photoscoutai.canini-d.workers.dev'; // <-- METTI QUI IL TUO URL
         const response = await fetch(WORKER_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
