@@ -1,55 +1,67 @@
-const CACHE_NAME = 'photoweather-v3';
-const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './style.css',
-  './main.js',
+// ════════════════════════════════════════
+// service-worker.js — PhotoWeather
+// ════════════════════════════════════════
+
+const CACHE_NAME = 'photoweather-cache-v1';
+
+// App Shell: The essential files needed for the app to run.
+// I have updated this list to include your specific icon files.
+const FILES_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/style.css',
+  '/main.js',
+  '/manifest.json',
+  '/icons/android-chrome-192x192.png',
+  '/icons/android-chrome-512x512.png',
+  '/icons/apple-touch-icon.png',
+  '/icons/favicon-16x16.png',
+  '/icons/favicon-32x32.png',
   'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
+  'https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+// 1. Install the service worker and cache the app shell.
+self.addEventListener('install', (evt) => {
+  console.log('[ServiceWorker] Install');
+  evt.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[ServiceWorker] Pre-caching app shell');
+      return cache.addAll(FILES_TO_CACHE);
+    })
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.map(key => {
+// 2. Activate the service worker and clean up old caches.
+self.addEventListener('activate', (evt) => {
+  console.log('[ServiceWorker] Activate');
+  evt.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
         if (key !== CACHE_NAME) {
+          console.log('[ServiceWorker] Removing old cache', key);
           return caches.delete(key);
         }
-      })
-    ))
+      }));
+    })
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  const req = event.request;
-  const url = new URL(req.url);
-
-  // Strategia Network-First per API
-  if (url.hostname.includes('api.open-meteo.com') || url.hostname.includes('nominatim.openstreetmap.org')) {
-    event.respondWith(
-      fetch(req)
-      .then(res => {
-        const cacheRes = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, cacheRes));
-        return res;
-      })
-      .catch(() => caches.match(req).then(res => res || new Response(null, { status: 503, statusText: 'Service Unavailable' })))
-    );
-  } else {
-    // Strategia Cache-First per asset statici e tile della mappa
-    event.respondWith(
-      caches.match(req).then(res => res || fetch(req).then(fetchRes => {
-        const cacheRes = fetchRes.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(req, cacheRes));
-        return fetchRes;
-      }))
-    );
+// 3. Serve assets from cache first (Cache-First Strategy).
+self.addEventListener('fetch', (evt) => {
+  if (evt.request.method !== 'GET') {
+    return;
   }
+  
+  evt.respondWith(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.match(evt.request)
+        .then((response) => {
+          return response || fetch(evt.request);
+        });
+    })
+  );
 });

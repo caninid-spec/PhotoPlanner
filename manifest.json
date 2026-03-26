@@ -1,21 +1,30 @@
 {
   "name": "PhotoWeather",
   "short_name": "PhotoWeather",
-  "start_url": ".",
+  "description": "Previsioni meteorologiche per fotografi, con analisi AI.",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0a0c10",
-  "theme_color": "#0a0c10",
-  "description": "Previsioni meteo per fotografi di paesaggio.",
+  "theme_color": "#12151c",
+  "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "https://www.gstatic.com/android/keyboard/emojikit/v20230829/1F4F8/1F4F8_u1F4F8.png",
+      "src": "icons/android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "https://www.gstatic.com/android/keyboard/emojikit/v20230829/1F4F8/1F4F8_u1F4F8.png",
+      "src": "icons/android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
