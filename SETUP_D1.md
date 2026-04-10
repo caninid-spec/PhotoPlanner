@@ -6,7 +6,7 @@
 wrangler d1 create photoweather
 ```
 
-Copiali il database ID che appare (es: `12345678-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+Copiali il database ID che appare (es: `42e28b9a-aa42-4272-a4dc-8e72d68d2849`)
 
 ## 2. Aggiorna `wrangler.toml`
 
@@ -22,7 +22,7 @@ account_id = "YOUR_ACCOUNT_ID"
 [[d1_databases]]
 binding = "DB"
 database_name = "photoweather"
-database_id = "12345678-xxxx-xxxx-xxxx-xxxxxxxxxxxx"  # ← Il tuo ID
+database_id = "42e28b9a-aa42-4272-a4dc-8e72d68d2849"  # ← Il tuo ID
 ```
 
 ## 3. Deploy Worker
