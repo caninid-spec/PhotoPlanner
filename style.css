@@ -284,6 +284,107 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;heigh
     width: calc(100% - 24px);
   }
 }
+
+/* SAVED SPOTS PANEL */
+.saved-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.filter-input, .filter-select {
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: 'Syne', sans-serif;
+}
+.filter-input::placeholder {
+  color: var(--text-muted);
+}
+.filter-input:focus, .filter-select:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--surface2);
+}
+.saved-spots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.saved-spots-list::-webkit-scrollbar {
+  width: 3px;
+}
+.saved-spots-list::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.saved-spot-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.saved-spot-item:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+.saved-spot-emoji {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.saved-spot-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+.saved-spot-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.saved-spot-type {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.saved-spot-delete {
+  font-size: 14px;
+  padding: 4px 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+.saved-spot-delete:hover {
+  color: var(--red);
+  background: rgba(255, 71, 87, 0.1);
+}
+.saved-spots-group {
+  margin-bottom: 12px;
+}
+.saved-spots-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  padding-left: 8px;
+}
+
 @media (max-width: 600px) {
   .page-wrap { gap: 0; }
   .config-panel, .output-cards-container { padding: 12px; }

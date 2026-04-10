@@ -16,7 +16,7 @@
   }
 
   // 2. STATE & CONFIG
-  const WORKER_URL = 'https://photoscoutai.canini-d.workers.dev'; // ✅ AGGIUNTO https://
+  const WORKER_URL = 'photoscoutai.canini-d.workers.dev'; // Update con tuo domain
   
   const S = {
     lat: 46.0, lon: 10.5, timeHour: 6,
@@ -66,6 +66,7 @@
 
       S.dbReady = true;
       S.spots.forEach(addMarker);
+      renderSavedSpots();
       console.log('Database pronto. Spots caricati:', S.spots.length);
     } catch (error) {
       console.error('Errore caricamento DB:', error);
@@ -76,6 +77,7 @@
       S.spots = localSpots;
       S.saved = new Set(localSaved);
       S.spots.forEach(addMarker);
+      renderSavedSpots();
     }
   }
 
@@ -426,6 +428,7 @@
       notify(S.saved.has(id)?'⭐ Spot salvato!':'Spot rimosso dai preferiti','success');
       document.getElementById('bkmBtn').textContent=S.saved.has(id)?'🔖':'🏷';
       const sp=S.spots.find(s=>s.id===id); if(sp&&markers[id])markers[id].setIcon(mkIcon(sp));
+      renderSavedSpots();
     } catch (error) {
       console.error('Bookmark error:', error);
     }
@@ -463,6 +466,95 @@
   window.closeMod = (id,e) => {
     if(!e || e.target.id===id) document.getElementById(id).classList.remove('open');
   }
+  
+  // SAVED SPOTS PANEL FUNCTIONS
+  function renderSavedSpots() {
+    const savedSpotsList = document.getElementById('savedSpotsList');
+    const filterText = document.getElementById('savedSpotFilter')?.value.toLowerCase() || '';
+    const sortBy = document.getElementById('savedSpotSort')?.value || 'name-asc';
+    
+    // Filtra gli spot salvati
+    let savedSpots = S.spots.filter(sp => S.saved.has(sp.id));
+    
+    // Applica filtro per nome
+    if (filterText) {
+      savedSpots = savedSpots.filter(sp => sp.name.toLowerCase().includes(filterText));
+    }
+    
+    // Ordina
+    if (sortBy === 'name-asc') {
+      savedSpots.sort((a, b) => a.name.localeCompare(b.name, 'it'));
+    } else if (sortBy === 'name-desc') {
+      savedSpots.sort((a, b) => b.name.localeCompare(a.name, 'it'));
+    } else if (sortBy === 'type') {
+      savedSpots.sort((a, b) => {
+        if (a.type === b.type) return a.name.localeCompare(b.name, 'it');
+        return a.type.localeCompare(b.type, 'it');
+      });
+    } else if (sortBy === 'recent') {
+      savedSpots.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    }
+    
+    if (savedSpots.length === 0) {
+      savedSpotsList.innerHTML = '<p class="placeholder-text">Nessuno spot salvato ancora.</p>';
+      return;
+    }
+    
+    // Raggruppa per tipo se ordinato per tipo
+    if (sortBy === 'type') {
+      const grouped = {};
+      savedSpots.forEach(sp => {
+        if (!grouped[sp.type]) grouped[sp.type] = [];
+        grouped[sp.type].push(sp);
+      });
+      
+      savedSpotsList.innerHTML = Object.entries(grouped).map(([type, spots]) => `
+        <div class="saved-spots-group">
+          <div class="saved-spots-group-title">${type}</div>
+          ${spots.map(sp => createSavedSpotHTML(sp)).join('')}
+        </div>
+      `).join('');
+    } else {
+      savedSpotsList.innerHTML = savedSpots.map(sp => createSavedSpotHTML(sp)).join('');
+    }
+  }
+  
+  function createSavedSpotHTML(sp) {
+    return `
+      <div class="saved-spot-item" onclick="goToSavedSpot('${sp.id}')">
+        <div class="saved-spot-emoji">${sp.emoji}</div>
+        <div class="saved-spot-info">
+          <div class="saved-spot-name">${sp.name}</div>
+          <div class="saved-spot-type">${sp.type}</div>
+        </div>
+        <button class="saved-spot-delete" onclick="deleteSavedSpot('${sp.id}', event)">🗑</button>
+      </div>
+    `;
+  }
+  
+  window.goToSavedSpot = (id) => {
+    const sp = S.spots.find(s => s.id === id);
+    if (sp) {
+      openSpot(id);
+      map.setView([sp.lat, sp.lon], Math.max(map.getZoom(), 11), {animate: true});
+    }
+  }
+  
+  window.deleteSavedSpot = async (id, event) => {
+    event.stopPropagation();
+    if (!confirm('Rimuovere questo spot dai preferiti?')) return;
+    
+    try {
+      await removeBookmarkFromDB(id);
+      S.saved.delete(id);
+      renderSavedSpots();
+      notify('🗑 Spot rimosso dai preferiti', 'success');
+    } catch (error) {
+      console.error('Delete error:', error);
+      notify('⚠️ Errore rimozione spot', 'error');
+    }
+  }
+  
   // This makes the AI advice function available to the inline onclick attribute
   window.getAIAdvice = getAIAdvice;
 
@@ -477,6 +569,16 @@
   document.getElementById('searchInput').addEventListener('input',e=>{ clearTimeout(sdTimer); const q=e.target.value.trim(); if(q.length<3){hideRes();return;} sdTimer=setTimeout(()=>doSearch(q),300);});
   document.addEventListener('click',e=>{if(!e.target.closest('.search-wrap'))hideRes();});
   document.addEventListener('keydown',e=>{ if(document.activeElement.tagName==='INPUT')return; const K={s:toggleSunTool,l:locateMe,Escape:()=>{closeSpot();closeMod('spotModal');hideRes();}}; K[e.key]?.();});
+  
+  // Saved Spots Filter & Sort
+  const savedSpotFilterEl = document.getElementById('savedSpotFilter');
+  const savedSpotSortEl = document.getElementById('savedSpotSort');
+  if (savedSpotFilterEl) {
+    savedSpotFilterEl.addEventListener('input', renderSavedSpots);
+  }
+  if (savedSpotSortEl) {
+    savedSpotSortEl.addEventListener('change', renderSavedSpots);
+  }
   
   // 8. INITIALIZATION
   onTime(6);

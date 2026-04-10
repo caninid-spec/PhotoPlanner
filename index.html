@@ -41,7 +41,24 @@
         </div>
     </div>
     
-    <!-- Card 2: Forecast Settings -->
+    <!-- Card 2: Spot Salvati -->
+    <div class="card">
+        <h2 class="card-title">Spot Salvati</h2>
+        <div class="saved-controls">
+          <input type="text" id="savedSpotFilter" placeholder="Filtra per nome…" class="filter-input">
+          <select id="savedSpotSort" class="filter-select">
+            <option value="name-asc">Nome A-Z</option>
+            <option value="name-desc">Nome Z-A</option>
+            <option value="type">Per Tipo</option>
+            <option value="recent">Più Recenti</option>
+          </select>
+        </div>
+        <div class="saved-spots-list" id="savedSpotsList">
+          <p class="placeholder-text">Nessuno spot salvato ancora.</p>
+        </div>
+    </div>
+    
+    <!-- Card 3: Forecast Settings -->
     <div class="card">
         <h2 class="card-title">Parametri Previsione</h2>
         <p class="slabel">Sorgente Dati</p>
