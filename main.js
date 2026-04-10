@@ -16,7 +16,7 @@
   }
 
   // 2. STATE & CONFIG
-  const WORKER_URL = 'photoscoutai.canini-d.workers.dev'; // Update con tuo domain
+  const WORKER_URL = 'https://photoscoutai.canini-d.workers.dev'; // Update con tuo domain
   
   const S = {
     lat: 46.0, lon: 10.5, timeHour: 6,
