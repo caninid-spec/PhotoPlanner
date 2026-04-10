@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-// main.js — PhotoPlanner (OTTIMIZZATO AI)
+// main.js — PhotoWeather (D1 Database Integration)
 // ════════════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -39,150 +39,6 @@
   const GRADS={rg:[[26,30,40],[255,107,53],[255,71,87]],bw:[[26,30,40],[126,184,247],[200,220,255]],pu:[[26,30,40],[167,139,250],[255,71,87]],in:[[26,30,40],[99,102,241],[167,139,250]],or:[[26,30,40],[255,165,2],[255,200,80]],ye:[[26,30,40],[232,240,60],[255,220,100]],te:[[26,30,40],[20,184,166],[126,211,200]],bl:[[26,30,40],[59,130,246],[147,197,253]]};
   const RANGES={cloud_cover_low:[0,100],visibility:[0,24140],precipitation_probability:[0,100],cloud_cover:[0,100],direct_radiation:[0,800],shortwave_radiation:[0,1000],wind_speed_10m:[0,60],cloud_cover_high:[0,100]};
   const MCOL={Montagna:'pm-r',Lago:'pm-b',Colline:'pm-g',Città:'pm-o',Foresta:'pm-g',Costa:'pm-b'};
-
-  // 📸 GENERI FOTOGRAFICI (DATABASE LOCALE)
-  const PHOTO_GENRES = {
-    golden_hour: {
-      label: '🌅 Ora d\'Oro',
-      description: 'Luce morbida e calda, perfetta per ritratti e paesaggi',
-      conditions: ['direct_radiation', 'visibility', 'clear_sky']
-    },
-    blue_hour: {
-      label: '🌌 Ora Blu',
-      description: 'Twilight con sfumature blu, ideale per architettura e paesaggio urbano',
-      conditions: ['night', 'clear_sky', 'low_clouds']
-    },
-    dramatic_sky: {
-      label: '⛅ Cielo Drammatico',
-      description: 'Nuvole texture, contrasti forti, ottimo per landscape epico',
-      conditions: ['contrast', 'redSky', 'cloud_cover']
-    },
-    foggy_mood: {
-      label: '🌫️ Atmosfera Nebbia',
-      description: 'Minimalismo, silhouette, mood mistico',
-      conditions: ['fog', 'low_visibility', 'low_contrast']
-    },
-    reflection: {
-      label: '🌊 Riflessi',
-      description: 'Laghi e superfici d\'acqua calme, perfect mirror shots',
-      conditions: ['reflection', 'low_wind', 'calm_water']
-    },
-    silhouette: {
-      label: '🌅 Silhouette',
-      description: 'Backlighting forte, soggetto scuro contro tramonto/alba',
-      conditions: ['golden_hour', 'high_contrast', 'backlighting']
-    },
-    night_sky: {
-      label: '⭐ Cielo Notturno',
-      description: 'Stelle, Galassia, astrophotography con bassa inquinamento luminoso',
-      conditions: ['night', 'clear_sky', 'no_clouds']
-    },
-    macro_detail: {
-      label: '🔍 Macro e Dettagli',
-      description: 'Texture, gocce di rugiada, insetti, fiori close-up',
-      conditions: ['soft_light', 'humidity']
-    },
-    action: {
-      label: '💨 Azione e Movimento',
-      description: 'Sport, acque in movimento, soggetti dinamici',
-      conditions: ['bright_light', 'high_shutter_speed']
-    },
-    landscape: {
-      label: '🏔️ Paesaggio Epico',
-      description: 'Wide angle, profondità, composizione con tre piani',
-      conditions: ['clear_visibility', 'good_contrast', 'dynamic_sky']
-    }
-  };
-
-  // ⚙️ CALCOLO GENERI FOTOGRAFICI CONSIGLIATI (LOCAL, zero token!)
-  function calcPhotoGenres(metrics, hour) {
-    const { redSky, fog, night, contrast, reflection, temp, clouds, wind, visibility, rain } = metrics;
-    const recommendations = [];
-
-    // Ora d'Oro (alba/tramonto)
-    if ((hour >= 6 && hour <= 8) || (hour >= 17 && hour <= 20)) {
-      recommendations.push({
-        genre: 'golden_hour',
-        confidence: Math.min(95, 70 + (redSky / 100) * 25),
-        reason: 'Luce calda e morbida'
-      });
-    }
-
-    // Silhouette se backlit strong
-    if (redSky > 70 && contrast > 60 && ((hour >= 6 && hour <= 8) || (hour >= 17 && hour <= 20))) {
-      recommendations.push({
-        genre: 'silhouette',
-        confidence: Math.min(98, 80 + (redSky / 100) * 18),
-        reason: 'Backlighting ideale per sagome'
-      });
-    }
-
-    // Cielo Drammatico
-    if (contrast > 70 && clouds > 30 && clouds < 80 && rain < 20) {
-      recommendations.push({
-        genre: 'dramatic_sky',
-        confidence: Math.min(92, 75 + (contrast / 100) * 17),
-        reason: 'Cielo texture e contrasto forte'
-      });
-    }
-
-    // Nebbia/Mood
-    if (fog > 60 && visibility < 5) {
-      recommendations.push({
-        genre: 'foggy_mood',
-        confidence: Math.min(88, 65 + (fog / 100) * 23),
-        reason: 'Atmosfera mistica e minimalista'
-      });
-    }
-
-    // Riflessi (acqua calma)
-    if (reflection > 70 && wind < 5) {
-      recommendations.push({
-        genre: 'reflection',
-        confidence: Math.min(90, 70 + (reflection / 100) * 20),
-        reason: 'Superficie d\'acqua specchio perfetto'
-      });
-    }
-
-    // Ora Blu (crepuscolo)
-    if ((hour >= 5 && hour <= 7) || (hour >= 19 && hour <= 21)) {
-      recommendations.push({
-        genre: 'blue_hour',
-        confidence: Math.min(85, 70 + Math.abs(hour - 6) <= 2 ? 15 : 10),
-        reason: 'Sfumature blu del crepuscolo'
-      });
-    }
-
-    // Cielo Notturno
-    if (night > 80 && clouds < 30) {
-      recommendations.push({
-        genre: 'night_sky',
-        confidence: Math.min(88, 75 + ((100 - clouds) / 100) * 13),
-        reason: 'Cielo stellato, bassa inquinamento luminoso'
-      });
-    }
-
-    // Macro (umidità alta)
-    if (fog > 40 || (temp < 5 && humidity > 70)) {
-      recommendations.push({
-        genre: 'macro_detail',
-        confidence: Math.min(75, 55 + (fog / 100) * 20),
-        reason: 'Rugiada, gocce, texture dettagliati'
-      });
-    }
-
-    // Paesaggio Epico
-    if (contrast > 50 && visibility > 15 && (redSky > 40 || night > 20)) {
-      recommendations.push({
-        genre: 'landscape',
-        confidence: Math.min(90, 70 + (visibility / 24) * 20),
-        reason: 'Visibilità eccellente e dinamica del cielo'
-      });
-    }
-
-    // Sort by confidence descending, top 3
-    return recommendations.sort((a, b) => b.confidence - a.confidence).slice(0, 3);
-  }
 
   // 3. MAP INITIALIZATION
   const map = L.map('lmap',{zoomControl:false,attributionControl:true}).setView([S.lat, S.lon],7);
@@ -340,122 +196,40 @@
         const gd=await gr.json();
         place=gd.name||gd.address?.city||gd.address?.town||gd.address?.village||gd.address?.county||gd.address?.state||place;
       }catch(_){}
-      renderWeather(d,place, lat, lon);
-      saveState();
+      renderWeather(d,place);
+      updateSunTimes(d);
+      drawHeat(d);
     }catch(e){
       weatherContent.innerHTML=`<div class="wch"><span>⚠️</span><span class="wct">Errore API</span><span class="wcs er">Offline</span></div><p class="placeholder-text">${e.message}.</p>`;
     }
   }
 
-  // 🤖 AI ADVICE OTTIMIZZATO (70% meno token!)
-  async function getAIAdvice(locationName, metrics, lat, lon, hour) {
+  async function getAIAdvice(locationName, weatherSummary, time) {
     const aiContent = document.getElementById('assistant-card-content');
     aiContent.innerHTML = `
-        <div class="wch"><span>⏳</span><span class="wct">Analisi fotografica in corso…</span><span class="wcs sl"><span class="spin"></span></span></div>
-        <p class="placeholder-text">Calcolo generi ottimali per <b>${locationName}</b>...</p>
+        <div class="wch"><span>⏳</span><span class="wct">L'assistente AI sta pensando...</span><span class="wcs sl"><span class="spin"></span></span></div>
+        <p class="placeholder-text">Sto analizzando le condizioni per <b>${locationName}</b>...</p>
     `;
-    
     try {
-        // Step 1: Calcoli locali (zero token!)
-        const genres = calcPhotoGenres(metrics, hour);
-        const genreList = genres.map(g => g.genre).join(', ');
-        
-        // Step 2: Request smarter e mirata (solo 150 token input!)
-        const aiRequest = {
-            location: locationName,
-            lat: lat,
-            lon: lon,
-            time: hour,
-            metrics: {
-                redSky: metrics.redSky,
-                fog: metrics.fog,
-                night: metrics.night,
-                contrast: metrics.contrast,
-                reflection: metrics.reflection
-            },
-            weather: {
-                temp: metrics.temp,
-                clouds: metrics.clouds,
-                wind: metrics.wind,
-                visibility: metrics.visibility,
-                rain: metrics.rain
-            },
-            suggestedGenres: genreList,
-            hour: hour
-        };
-
-        const response = await fetch(`${WORKER_URL}/analyze-optimized`, {
+        const response = await fetch(`${WORKER_URL}/analyze`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(aiRequest),
+            body: JSON.stringify({ locationName, weatherSummary, time }),
         });
-
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || `Errore: ${response.status}`);
+            throw new Error(errorData.error || `Errore del worker: ${response.status}`);
         }
-
-        const data = await response.json();
-        const genres_data = data.genres || genres; // Fallback ai calcoli locali se AI fallisce
-        
-        // Step 3: Renderizza risultati in JSON compatto
-        const genresHTML = genres_data.slice(0, 3).map(g => `
-            <div style="margin-bottom:16px; padding:12px; background:#f5f7fa; border-radius:8px; border-left:3px solid #0066cc;">
-                <div style="font-weight:600; color:#0066cc; margin-bottom:4px;">${PHOTO_GENRES[g.genre]?.label || g.genre}</div>
-                <div style="font-size:12px; color:#6b7280; line-height:1.5; margin-bottom:6px;">${PHOTO_GENRES[g.genre]?.description || g.reason || ''}</div>
-                <div style="font-size:11px; color:#0066cc; font-weight:600;">✓ Confidence: ${g.confidence?.toFixed(0) || g.confidence}%</div>
-            </div>
-        `).join('');
-
-        const tipsHTML = data.tips ? `
-            <div style="margin-top:16px; padding:12px; background:#fffbeb; border-radius:8px; border-left:3px solid #f59e0b;">
-                <div style="font-weight:600; color:#d97706; margin-bottom:8px;">💡 Consigli Specifici</div>
-                <div style="font-size:12px; color:#78350f; line-height:1.6;">${data.tips}</div>
-            </div>
-        ` : '';
-
-        const locationsHTML = data.locations ? `
-            <div style="margin-top:16px;">
-                <div style="font-weight:600; color:#0f1419; margin-bottom:8px;">📍 Location Ideali</div>
-                ${data.locations.slice(0, 2).map(loc => `
-                    <div style="font-size:12px; margin-bottom:6px; padding:8px; background:#f3f4f6; border-radius:6px;">
-                        <div style="font-weight:500;">${loc}</div>
-                    </div>
-                `).join('')}
-            </div>
-        ` : '';
-
+        const { result } = await response.json();
+        const formattedResult = result.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
         aiContent.innerHTML = `
-            <div class="wch"><span>✨</span><span class="wct">Generi Fotografici Consigliati</span></div>
-            <div style="font-size:13px; line-height:1.6; color:#0f1419;">
-                ${genresHTML}
-                ${tipsHTML}
-                ${locationsHTML}
-                <div style="margin-top:16px; padding:12px; background:#f0fdf4; border-radius:8px; font-size:11px; color:#166534; text-align:center;">
-                    ⚡ Analisi AI ottimizzata (70% meno token)
-                </div>
-            </div>
+            <div class="wch"><span>💡</span><span class="wct">Consigli per ${locationName}</span></div>
+            <div style="font-size:13px; line-height:1.7; color: var(--text);">${formattedResult}</div>
         `;
     } catch (error) {
-        console.error('AI error:', error);
-        
-        // Fallback: mostra i generi calcolati localmente
-        const genres = calcPhotoGenres(metrics, hour);
-        const genresHTML = genres.map(g => `
-            <div style="margin-bottom:12px; padding:12px; background:#f5f7fa; border-radius:8px; border-left:3px solid #0066cc;">
-                <div style="font-weight:600; color:#0066cc;">${PHOTO_GENRES[g.genre]?.label || g.genre}</div>
-                <div style="font-size:12px; color:#6b7280; margin-top:4px;">${PHOTO_GENRES[g.genre]?.description || ''}</div>
-            </div>
-        `).join('');
-
         aiContent.innerHTML = `
-            <div class="wch"><span>✨</span><span class="wct">Generi Fotografici Locali</span></div>
-            <div style="font-size:13px; line-height:1.6; color:#0f1419;">
-                ${genresHTML}
-                <div style="margin-top:16px; padding:12px; background:#fef3c7; border-radius:8px; font-size:11px; color:#92400e;">
-                    ℹ️ Calcolati localmente (AI non disponibile)
-                </div>
-            </div>
+            <div class="wch"><span>⚠️</span><span class="wct">Errore</span><span class="wcs er">Offline</span></div>
+            <p class="placeholder-text">Impossibile contattare l'assistente AI: ${error.message}</p>
         `;
     }
   }
@@ -465,24 +239,17 @@
   function clamp(v){return Math.round(Math.max(0,Math.min(100,v)));}
   function sb(lbl,p){const c=p>70?'var(--green)':p>40?'var(--orange)':'var(--red)'; return `<div class="srow"><span class="slbl">${lbl}</span><div class="sbar"><div class="sfill" style="width:${p}%;background:${c}"></div></div><span class="spct" style="color:${c}">${p}%</span></div>`;}
 
-  function renderWeather(d, place, lat, lon) {
+  function renderWeather(d, place) {
     const h = d.hourly, i = hIdx(d);
-    const cl = h.cloud_cover_low?.[i] ?? 0, ch = h.cloud_cover_high?.[i] ?? 0, ct = h.cloud_cover?.[i] ?? 0, rad = h.shortwave_radiation?.[i] ?? 0, dr = h.direct_radiation?.[i] ?? 0, pr = h.precipitation?.[i] ?? 0, pp = h.precipitation_probability?.[i] ?? 0, vis = h.visibility?.[i] ?? 24140, ws = h.wind_speed_10m?.[i] ?? 0, tmp = h.temperature_2m?.[i] ?? 0, humidity = h.relative_humidity_2m?.[i] ?? 50;
-    
-    // Calcoli metriche fotografiche
+    const cl = h.cloud_cover_low?.[i] ?? 0, ch = h.cloud_cover_high?.[i] ?? 0, ct = h.cloud_cover?.[i] ?? 0, rad = h.shortwave_radiation?.[i] ?? 0, dr = h.direct_radiation?.[i] ?? 0, pr = h.precipitation?.[i] ?? 0, pp = h.precipitation_probability?.[i] ?? 0, vis = h.visibility?.[i] ?? 24140, ws = h.wind_speed_10m?.[i] ?? 0, tmp = h.temperature_2m?.[i] ?? 0;
     const redSky = clamp(((cl > 10 && cl < 70 ? 60 : 20) + (ch > 20 ? 20 : 0) + (rad > 50 ? 20 : 0) - (ct > 85 ? 30 : 0) - (pr > 0.5 ? 30 : 0)));
     const fog = clamp(((vis < 1000 ? 90 : vis < 5000 ? 60 : vis < 10000 ? 30 : 5) + (ws < 3 ? 10 : 0)));
     const night = clamp(100 - ct - (pr > 0 ? 50 : 0));
     const contrast = clamp((dr > 200 ? 80 : dr > 50 ? 50 : 10) + (ct < 30 ? 20 : 0));
     const refl = clamp(100 - (ws > 10 ? 70 : ws > 5 ? 40 : ws > 2 ? 20 : 5) - (pr > 0.5 ? 30 : 0));
     const tl = h.time?.[i]?.split('T')[1]?.slice(0, 5) || '--:--';
-    const hour = parseInt(tl.split(':')[0]);
 
-    // Metriche complete per AI
-    const metrics = {
-      redSky, fog, night, contrast, reflection: refl,
-      temp: tmp, clouds: ct, wind: ws, visibility: vis / 1000, rain: pr, humidity
-    };
+    const weatherSummaryForAI = `- Temperatura: ${tmp.toFixed(1)}°C\n- Copertura nuvolosa: ${ct}% (${cl}% basse, ${h.cloud_cover_mid?.[i]??0}% medie, ${ch}% alte)\n- Probabilità di precipitazioni: ${pp}%\n- Vento: ${ws.toFixed(0)} km/h\n- Visibilità: ${(vis / 1000).toFixed(1)} km\n- Radiazione solare diretta: ${dr} W/m²`;
 
     const htmlContent = `
       <div class="wch"><span>🌍</span><span class="wct">${place}</span><span class="wcs">${tl}</span></div>
@@ -500,7 +267,7 @@
         ${sb('☀️ Contrasto', contrast)}
         ${sb('🌊 Riflesso', refl)}
       </div>
-      <button class="wpbtn" onclick="getAIAdvice('${place.replace(/'/g, "\\'")}', ${JSON.stringify(metrics).replace(/"/g, '&quot;')}, ${lat}, ${lon}, ${hour})">✨ Analizza Generi Fotografici</button>
+      <button class="wpbtn" onclick="getAIAdvice('${place.replace(/'/g, "\\'")}', \`${weatherSummaryForAI.replace(/`/g, '\\`')}\`, '${tl}')">✨ Chiedi all'AI</button>
     `;
     document.getElementById('weather-card-content').innerHTML = htmlContent;
     S._lastPlace = place;
@@ -534,33 +301,109 @@
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  function addMarker(sp){
-    const col=MCOL[sp.type]||'pm-g'; const mk=L.marker([sp.lat,sp.lon],{icon:mkIcon(sp)}).addTo(map); mk.bindPopup(`<div style="font-size:12px"><b>${sp.name}</b><br>${sp.type} · ${sp.alt}<br><button onclick="openSpot('${sp.id}')" style="margin-top:8px; padding:6px 12px; background:#e8f03c; border:none; border-radius:4px; cursor:pointer;">📍 Dettagli</button></div>`, {maxWidth:200}); markers[sp.id]=mk;
-  }
-  function mkIcon(sp){
-    const col=MCOL[sp.type]||'pm-g';
-    return L.divIcon({html:`<div style="background:${col==='pm-r'?'#ef4444':col==='pm-b'?'#3b82f6':'#10b981'}; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 2px 8px rgba(0,0,0,0.3); border:2px solid white;">${sp.emoji}</div>`,iconSize:[36,36],className:'custom-icon'});
+  function mkIcon(s) {
+    const col = MCOL[s.type] || 'pm-g';
+    return L.divIcon({
+      className: `pm ${col} ${S.saved.has(s.id) ? 'starred' : ''}`,
+      html: `<div class="micon">${s.emoji}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+    });
   }
 
-  // 6. WINDOW GLOBALS & EVENT HANDLERS
-  window.onTime = t => { S.timeHour=Math.min(parseInt(t),71); const d=S.weatherData; if(!d)return; const i=hIdx(d); const time=d.hourly.time?.[i]?.split('T')[1]?.slice(0,5)||'--:--'; document.getElementById('timeDisplay').textContent=time; document.getElementById('timeDate').textContent=d.hourly.time?.[i]?.split('T')[0]||'—'; if(S.weatherData)drawHeat(d); }
-  window.setHr = h => { const maxH=Math.min((S.weatherData?.hourly?.time?.length||72)-1,Math.round(h*4)); document.getElementById('timeSlider').value=maxH; onTime(maxH); }
-  window.selModel = (el, mod) => { document.querySelectorAll('.mo').forEach(e=>e.classList.remove('active')); el.classList.add('active'); }
-  window.selParam = (el,pm,pl,pg) => { document.querySelectorAll('.pc').forEach(e=>e.classList.remove('active')); el.classList.add('active'); S.param=pm; S.paramLabel=pl; S.paramGrad=pg; if(S.weatherData)drawHeat(S.weatherData); }
-  window.toggleSunTool = () => { S.sunOn=!S.sunOn; document.getElementById('sunBtn').classList.toggle('active',S.sunOn); }
-  window.notify = (msg,type) => { const t=document.getElementById('toast'); t.querySelector('span').textContent=msg; t.className='toast '+type; setTimeout(()=>t.className='toast',3000); }
-  window.hideRes = () => { document.getElementById('searchResults').innerHTML=''; }
-  let sdTimer;
-  window.doSearch = async q => {
-    const sr=document.getElementById('searchResults');
-    if(!q.trim()){sr.innerHTML=''; return;}
-    try{
-      const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=it`,{headers:{'Accept-Language':'it'}});
-      const d=await r.json();
-      sr.innerHTML=d.map(p=>`<div class="search-result" onclick="goTo(${p.lat},${p.lon},'${p.name.replace(/'/g,'\\\'')}')">${p.name}</div>`).join('');
-    }catch(e){sr.innerHTML='<div class="search-result">Errore ricerca</div>';}
+  function addMarker(s) {
+    if (markers[s.id]) return;
+    markers[s.id] = L.marker([s.lat, s.lon], { icon: mkIcon(s) })
+      .addTo(map)
+      .bindPopup(`<b>${s.name}</b> <br> ${s.type}`)
+      .on('click', () => openSpot(s.id));
   }
-  window.goTo = (lat,lon,name) => { map.setView([lat,lon],11,{animate:true}); S.lat=parseFloat(lat); S.lon=parseFloat(lon); hideRes(); loadWeather(S.lat,S.lon); }
+
+  window.onTime = h => {
+    S.timeHour = parseInt(h); // this is the hourly index (0-71)
+    const idx = S.timeHour;
+    // Compute real time from weather data if available, else estimate
+    let displayHour = idx % 24;
+    let dateObj = new Date();
+    dateObj.setDate(dateObj.getDate() + Math.floor(idx / 24));
+    dateObj.setHours(displayHour, 0, 0, 0);
+    if (S.weatherData?.hourly?.time?.[idx]) {
+      const isoStr = S.weatherData.hourly.time[idx]; // e.g. "2025-04-10T14:00"
+      dateObj = new Date(isoStr);
+      displayHour = dateObj.getHours();
+    }
+    document.getElementById('timeDisplay').textContent = String(displayHour).padStart(2, '0') + ':00';
+    document.getElementById('timeDate').textContent = dateObj.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (S.weatherData) { renderWeather(S.weatherData, S._lastPlace || 'Luogo'); drawHeat(S.weatherData); updateSunTimes(S.weatherData); }
+  }
+
+  window.selModel = (el, name) => {
+    document.querySelectorAll('.mo').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  window.selParam = (el, param, lbl, grad) => {
+    document.querySelectorAll('.pc').forEach(e => e.classList.remove('active'));
+    el.classList.add('active');
+    S.param = param; S.paramLabel = lbl; S.paramGrad = grad;
+    const [lo, hi] = RANGES[param];
+    const bar = document.getElementById('legBar');
+    const grad_vals = GRADS[grad];
+    const c1 = `rgb(${grad_vals[0].join(',')})`, c2 = `rgb(${grad_vals[1].join(',')})`, c3 = `rgb(${grad_vals[2].join(',')})`;
+    bar.style.background = `linear-gradient(to right, ${c1}, ${c2}, ${c3})`;
+    document.getElementById('legTitle').textContent = `${lbl} (${lo}–${hi})`;
+    if (S.weatherData) drawHeat(S.weatherData);
+  }
+
+  window.setHr = h => { document.getElementById('timeSlider').value=h; onTime(h); }
+
+  window.toggleSunTool = () => {
+    S.sunOn=!S.sunOn;
+    document.getElementById('sunBtn').classList.toggle('active',S.sunOn);
+    if(S.sunOn){drawSun();notify('☀️ Strumento sole attivo','success');}
+    else{if(S.sunMarker)map.removeLayer(S.sunMarker);if(S.sunLineLayer)map.removeLayer(S.sunLineLayer);S.sunMarker=null;S.sunLineLayer=null;}
+  }
+
+  window.drawSun = () => {
+    if(!S.sunOn)return;
+    if(S.sunMarker)map.removeLayer(S.sunMarker); if(S.sunLineLayer)map.removeLayer(S.sunLineLayer);
+    const hr=S.timeHour%24, az=((hr-6)/12)*180, r2d=Math.PI/180, dist=0.07;
+    const slat=S.lat+dist*Math.cos(az*r2d), slon=S.lon+dist*Math.sin(az*r2d);
+    S.sunMarker=L.marker([slat,slon],{icon:L.divIcon({className:'',html:'<div style="background:#ffa502;width:18px;height:18px;border-radius:50%;box-shadow:0 0 12px #ffa502"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);
+    S.sunLineLayer=L.polyline([[S.lat,S.lon],[slat,slon]],{color:'rgba(255,165,2,.5)',weight:2,dashArray:'5,5'}).addTo(map);
+  }
+  
+  // 6. UI ACTIONS & CONTROLS
+  let tTimer;
+  window.notify = (msg,type) => {
+    clearTimeout(tTimer);
+    const t=document.getElementById('toast');
+    t.className='toast show '+(type||'');
+    t.querySelector('#toastMsg').textContent=msg;
+    tTimer=setTimeout(()=>t.classList.remove('show'),3000);
+  }
+  
+  let sdTimer=null, sdCtrl=null;
+  async function doSearch(q){
+    if(sdCtrl)sdCtrl.abort(); sdCtrl=new AbortController();
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&addressdetails=1`,{signal:sdCtrl.signal,headers:{'Accept-Language':'it'}});
+      showRes(await r.json(),q);
+    }catch(e){if(e.name!=='AbortError')hideRes();}
+  }
+  function showRes(arr,q){
+    const el=document.getElementById('searchResults');
+    if(!arr||!arr.length){el.innerHTML=`<div class="sri"><span style="color:var(--text-muted)">Nessun risultato</span></div>`;el.style.display='block';return;}
+    el.innerHTML=arr.map(r=>{ const name=r.name||r.display_name.split(',')[0], sub=r.display_name.split(',').slice(1,3).join(',').trim(); return `<div class="sri" onclick="gotoRes(${r.lat},${r.lon},'${name.replace(/'/g,"\\'")}')"><span>📍</span><div><div class="sri-name">${name}</div><div class="sri-sub">${sub}</div></div></div>`;}).join('');
+    el.style.display='block';
+  }
+  function hideRes(){document.getElementById('searchResults').style.display='none';}
+  window.gotoRes = async (lat,lon,name) => {
+    hideRes();
+    document.getElementById('searchInput').value=name; map.setView([parseFloat(lat),parseFloat(lon)],12,{animate:true});
+    S.lat=parseFloat(lat); S.lon=parseFloat(lon);
+    await loadWeather(S.lat,S.lon);
+  }
   window.locateMe = () => {
     notify('📡 Rilevamento posizione…','');
     navigator.geolocation.getCurrentPosition(async pos=>{

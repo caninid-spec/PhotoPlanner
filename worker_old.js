@@ -1,4 +1,4 @@
-// File: worker.js (Cloudflare Worker - OTTIMIZZATO AI)
+// File: worker.js (Cloudflare Worker con integrazione D1)
 
 export default {
   async fetch(request, env, ctx) {
@@ -20,14 +20,7 @@ export default {
 
     try {
       // ────────────────────────────────────────
-      // PHOTO AI ASSISTANT - ENDPOINT OTTIMIZZATO
-      // ────────────────────────────────────────
-      if (path === '/analyze-optimized' && request.method === 'POST') {
-        return await handlePhotoAnalysisOptimized(request, env, corsHeaders);
-      }
-
-      // ────────────────────────────────────────
-      // PHOTO AI ASSISTANT (vecchio endpoint - deprecato)
+      // PHOTO AI ASSISTANT (vecchio endpoint)
       // ────────────────────────────────────────
       if (path === '/analyze' && request.method === 'POST') {
         return await handlePhotoAnalysis(request, env, corsHeaders);
@@ -95,106 +88,7 @@ export default {
 };
 
 // ════════════════════════════════════════════════════════════
-// HANDLERS: PHOTO AI ASSISTANT - OTTIMIZZATO
-// ════════════════════════════════════════════════════════════
-
-/**
- * NUOVO ENDPOINT OTTIMIZZATO
- * - Input: ~150 token (metriche strutturate + JSON)
- * - Output: ~100 token (JSON compatto con generi)
- * - System prompt: ~60 token (minimalista)
- * - TOTALE: ~310 token (vs 1090 prima = -70%)
- */
-async function handlePhotoAnalysisOptimized(request, env, corsHeaders) {
-  try {
-    const payload = await request.json();
-    const { location, lat, lon, time, metrics, weather, suggestedGenres, hour } = payload;
-
-    if (!location || !metrics || !weather) {
-      return new Response(JSON.stringify({ error: 'Dati mancanti: location, metrics, weather' }), {
-        status: 400,
-        headers: corsHeaders,
-      });
-    }
-
-    const OPENAI_API_KEY = env.OPENAI_API_KEY;
-    if (!OPENAI_API_KEY) {
-      throw new Error('API Key non configurata.');
-    }
-
-    // SYSTEM PROMPT MINIMALISTA (60 token vs 250 prima)
-    const systemPrompt = `You are a photography expert. Given location metrics and suggested genres, 
-provide the 3 best photo genres to shoot NOW with specific tips. Return ONLY valid JSON with structure:
-{"genres":[{"genre":"name","confidence":N,"reason":"..."}],"tips":"...","locations":["loc1","loc2"]}`;
-
-    // BUILD USER MESSAGE (compatto, ~100 token)
-    const userMessage = `Location: ${location} (${lat.toFixed(3)},${lon.toFixed(3)})
-Time: ${hour}:00
-Conditions: Red Sky=${metrics.redSky}%, Fog=${metrics.fog}%, Night=${metrics.night}%, Contrast=${metrics.contrast}%, Reflection=${metrics.reflection}%
-Weather: ${weather.temp.toFixed(1)}°C, ${weather.clouds}% clouds, ${weather.wind}km/h wind, ${weather.visibility.toFixed(1)}km vis, ${weather.rain}mm rain
-Suggested Genres: ${suggestedGenres}
-
-Analyze conditions and recommend 3 best photo genres NOW. Respond in JSON only.`;
-
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4-turbo',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
-        ],
-        temperature: 0.6, // Più basso = più deterministico e conciso
-        max_tokens: 200,  // Limitato: 100 token output max
-      }),
-    });
-
-    if (!openaiResponse.ok) {
-      const errorData = await openaiResponse.json();
-      throw new Error(errorData.error?.message || 'OpenAI API error');
-    }
-
-    const data = await openaiResponse.json();
-    let aiResponse = data.choices[0].message.content.trim();
-
-    // Sanitize JSON response
-    if (aiResponse.startsWith('```json')) {
-      aiResponse = aiResponse.slice(7);
-    }
-    if (aiResponse.startsWith('```')) {
-      aiResponse = aiResponse.slice(3);
-    }
-    if (aiResponse.endsWith('```')) {
-      aiResponse = aiResponse.slice(0, -3);
-    }
-
-    const result = JSON.parse(aiResponse);
-
-    return new Response(JSON.stringify({
-      genres: result.genres || [],
-      tips: result.tips || 'Nessun tip specifico',
-      locations: result.locations || [],
-      tokenSaved: '70%'
-    }), {
-      status: 200,
-      headers: corsHeaders,
-    });
-
-  } catch (error) {
-    console.error('Optimized AI error:', error);
-    return new Response(JSON.stringify({ error: error.message, fallback: true }), {
-      status: 500,
-      headers: corsHeaders,
-    });
-  }
-}
-
-// ════════════════════════════════════════════════════════════
-// HANDLERS: PHOTO AI ASSISTANT (LEGACY - deprecato)
+// HANDLERS: PHOTO AI ASSISTANT
 // ════════════════════════════════════════════════════════════
 async function handlePhotoAnalysis(request, env, corsHeaders) {
   try {
@@ -227,6 +121,8 @@ REGOLE DI ANALISI:
 4. ESTETICA E COMPOSIZIONE: Cerca l'unicità. Suggerisci linee guida, primi piani interessanti e come interagire con il soggetto (specialmente nei ritratti).
 
 5. CONTESTO: Avvisa su affollamento potenziale e stagionalità (fioriture, colori autunnali).
+
+6, fornisci informazioni su Composizione e tecniche fotografiche adatte al luogo/condizioni
 
 Rispondi in italiano in modo strutturato, conciso e pratico. usando il grassetto per i nomi dei luoghi. Usa emoji SOLO SE NECESSARIO.`;
 
