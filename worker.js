@@ -241,14 +241,18 @@ ${weatherSummary}`;
         'Authorization': `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo',
-        messages: [
+        model: 'gpt-4.1-mini',
+        input: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userMessage },
+          { role: 'user', content: userMessage }
         ],
-        temperature: 0.7,
+        temperature: 0.6,
+        max_output_tokens: 200
       }),
     });
+    
+    const data = await openaiResponse.json();
+    let aiResponse = data.output[0].content[0].text.trim();
 
     if (!openaiResponse.ok) {
       const errorData = await openaiResponse.json();
