@@ -270,6 +270,7 @@
       <button class="wpbtn" onclick="getAIAdvice('${place.replace(/'/g, "\\'")}', \`${weatherSummaryForAI.replace(/`/g, '\\`')}\`, '${tl}')">✨ Chiedi all'AI</button>
     `;
     document.getElementById('weather-card-content').innerHTML = htmlContent;
+    S._lastPlace = place;
   }
 
   // Sun/Moon times (implementazione semplice)
@@ -292,7 +293,11 @@
     const [r,g,b] = GRADS[S.paramGrad][1];
     
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = `rgba(${r},${g},${b},0.15)`;
+    const normVal = S.param in RANGES
+      ? Math.max(0, Math.min(1, (val - RANGES[S.param][0]) / (RANGES[S.param][1] - RANGES[S.param][0])))
+      : 0.5;
+    const alpha = 0.12 + normVal * 0.38; // range 0.12–0.50
+    ctx.fillStyle = `rgba(${r},${g},${b},${alpha.toFixed(2)})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -315,12 +320,21 @@
   }
 
   window.onTime = h => {
-    S.timeHour = parseInt(h);
-    const d = new Date();
-    d.setHours(S.timeHour);
-    document.getElementById('timeDisplay').textContent = String(S.timeHour).padStart(2, '0') + ':00';
-    document.getElementById('timeDate').textContent = d.toLocaleDateString('it-IT', { weekday: 'short', month: 'short', day: 'numeric' });
-    if (S.weatherData) { renderWeather(S.weatherData, 'Luogo'); drawHeat(S.weatherData); updateSunTimes(S.weatherData); }
+    S.timeHour = parseInt(h); // this is the hourly index (0-71)
+    const idx = S.timeHour;
+    // Compute real time from weather data if available, else estimate
+    let displayHour = idx % 24;
+    let dateObj = new Date();
+    dateObj.setDate(dateObj.getDate() + Math.floor(idx / 24));
+    dateObj.setHours(displayHour, 0, 0, 0);
+    if (S.weatherData?.hourly?.time?.[idx]) {
+      const isoStr = S.weatherData.hourly.time[idx]; // e.g. "2025-04-10T14:00"
+      dateObj = new Date(isoStr);
+      displayHour = dateObj.getHours();
+    }
+    document.getElementById('timeDisplay').textContent = String(displayHour).padStart(2, '0') + ':00';
+    document.getElementById('timeDate').textContent = dateObj.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' });
+    if (S.weatherData) { renderWeather(S.weatherData, S._lastPlace || 'Luogo'); drawHeat(S.weatherData); updateSunTimes(S.weatherData); }
   }
 
   window.selModel = (el, name) => {
