@@ -1,7 +1,7 @@
 {
-  "name": "PhotoWeather",
-  "short_name": "PhotoWeather",
-  "description": "Previsioni meteorologiche per fotografi, con analisi AI.",
+  "name": "PhotoPlanner",
+  "short_name": "PhotoPlanner",
+  "description": "Pianificazione fotografica intelligente con analisi meteo e AI.",
   "start_url": "/PhotoPlanner/",
   "scope": "/PhotoPlanner/",
   "display": "standalone",
