@@ -173,31 +173,45 @@ ${weatherSummary}`;
 
 async function initDB(db) {
   // Crea la tabella se non esiste
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS spots (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      lat REAL NOT NULL,
-      lon REAL NOT NULL,
-      emoji TEXT,
-      type TEXT,
-      alt TEXT,
-      rat TEXT,
-      w TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS spots (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        lat REAL NOT NULL,
+        lon REAL NOT NULL,
+        emoji TEXT,
+        type TEXT,
+        alt TEXT,
+        rat TEXT,
+        w TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (error) {
+    // Se la tabella esiste già, l'errore è ignorato
+    if (!error.message.includes('already exists')) {
+      console.error('initDB error:', error);
+    }
+  }
 }
 
 async function initBookmarksDB(db) {
   // Tabella per i bookmark (saved spots)
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS bookmarks (
-      id TEXT PRIMARY KEY,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+  try {
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS bookmarks (
+        id TEXT PRIMARY KEY,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (error) {
+    // Se la tabella esiste già, l'errore è ignorato
+    if (!error.message.includes('already exists')) {
+      console.error('initBookmarksDB error:', error);
+    }
+  }
 }
 
 async function handleGetSpots(env, corsHeaders) {
