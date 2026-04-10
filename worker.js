@@ -136,7 +136,7 @@ Suggested Genres: ${suggestedGenres}
 
 Analyze conditions and recommend 3 best photo genres NOW. Respond in JSON only.`;
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -234,7 +234,7 @@ Rispondi in italiano in modo strutturato, conciso e pratico. usando il grassetto
 Condizioni meteo attuali:
 ${weatherSummary}`;
 
-    const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openaiResponse = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
