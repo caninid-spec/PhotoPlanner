@@ -282,8 +282,8 @@ async function handleUpdateSpot(id, body, env, corsHeaders) {
   await initDB(db);
 
   await db.prepare(`
-    UPDATE spots SET name=?, lat=?, lon=? WHERE id=?
-  `).bind(body.name, body.lat, body.lon, id).run();
+    UPDATE spots SET name=?, lat=?, lon=?, emoji=?, type=? WHERE id=?
+  `).bind(body.name, body.lat, body.lon, body.emoji, body.type, id).run();
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

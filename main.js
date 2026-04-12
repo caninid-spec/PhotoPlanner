@@ -205,7 +205,7 @@
 
       if (bookmarksRes.ok) {
         const bookmarks = await bookmarksRes.json();
-        S.saved = new Set(bookmarks);
+        S.saved = new Set(bookmarks.map(b => b.id));
       }
 
       S.dbReady = true;
@@ -645,7 +645,7 @@
     const sortBy = document.getElementById('savedSpotSort')?.value || 'name-asc';
     
     // Filtra gli spot salvati
-    let savedSpots = S.spots.filter(sp => S.saved.has(sp.id));
+    let savedSpots = [...S.spots];
     
     // Applica filtro per nome
     if (filterText) {
