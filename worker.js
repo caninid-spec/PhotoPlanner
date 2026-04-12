@@ -12,6 +12,7 @@ export default {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Credentials': 'true',
       'Content-Type': 'application/json',
     };
 
@@ -144,7 +145,7 @@ Genres:${suggestedGenres}`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        const res = await fetch('https://api.openai.com/v1/responses', {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           signal: controller.signal,
           headers: {
@@ -152,13 +153,13 @@ Genres:${suggestedGenres}`;
             'Authorization': `Bearer ${OPENAI_API_KEY}`,
           },
           body: JSON.stringify({
-            model: 'gpt-4.1-mini',
-            input: [
+            model: 'gpt-4-mini',
+            messages: [
               { role: 'system', content: systemPrompt },
               { role: 'user', content: userMessage }
             ],
             temperature: 0.4,
-            max_output_tokens: 150,
+            max_tokens: 150,
             response_format: { type: "json_object" }
           }),
         });
@@ -171,7 +172,7 @@ Genres:${suggestedGenres}`;
           throw new Error(data.error?.message || 'OpenAI error');
         }
 
-        const text = data.output[0].content[0].text;
+        const text = data.choices[0].message.content;
         const parsed = JSON.parse(text);
 
         const responseBody = JSON.stringify({
@@ -262,14 +263,14 @@ async function handleGetSpots(env, corsHeaders) {
 }
 
 async function handleCreateSpot(body, env, corsHeaders) {
-  const { id, name, lat, lon } = body;
+  const { id, name, lat, lon, emoji, type, alt, rat, w } = body;
   const db = env.DB;
   await initDB(db);
 
   await db.prepare(`
-    INSERT INTO spots (id, name, lat, lon)
-    VALUES (?, ?, ?, ?)
-  `).bind(id, name, lat, lon).run();
+    INSERT INTO spots (id, name, lat, lon, emoji, type, alt, rat, w)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).bind(id, name, lat, lon, emoji, type, alt, rat, JSON.stringify(w || [])).run();
 
   return new Response(JSON.stringify({ success: true }), {
     status: 201,
@@ -282,8 +283,8 @@ async function handleUpdateSpot(id, body, env, corsHeaders) {
   await initDB(db);
 
   await db.prepare(`
-    UPDATE spots SET name=?, lat=?, lon=?, emoji=?, type=? WHERE id=?
-  `).bind(body.name, body.lat, body.lon, body.emoji, body.type, id).run();
+    UPDATE spots SET name=?, lat=?, lon=?, emoji=?, type=?, alt=?, rat=?, w=? WHERE id=?
+  `).bind(body.name, body.lat, body.lon, body.emoji, body.type, body.alt, body.rat, JSON.stringify(body.w || []), id).run();
 
   return new Response(JSON.stringify({ success: true }), {
     status: 200,
