@@ -252,42 +252,31 @@
 
   onTime(6); map.invalidateSize(); initDB();
 
-  // ════════════════════════════════════════════════════════════
-  // MOBILE UI HANDLERS
-  // ════════════════════════════════════════════════════════════
-  (function initMobileUI() {
-    const body = document.body;
+  // ═══════════════════════════════════════════════
+  // MOBILE UI CONTROLLER
+  // ═══════════════════════════════════════════════
+  (function() {
     const navItems = document.querySelectorAll('.nav-item');
     const panels = {
-      map: document.querySelector('.map-container'),
       weather: document.querySelector('.output-cards-container'),
       spots: document.querySelector('.config-panel')
     };
 
-    function setActivePanel(panelName) {
-      navItems.forEach(n => n.classList.toggle('active', n.dataset.panel === panelName));
-      // Rimuovi active da tutti i pannelli
-      Object.values(panels).forEach(p => p?.classList.remove('panel-active'));
-      // Attiva quello richiesto
-      if (panelName === 'map') return; // Mappa sempre visibile
-      panels[panelName]?.classList.add('panel-active');
+    function setPanel(name) {
+      navItems.forEach(n => n.classList.toggle('active', n.dataset.panel === name));
+      Object.values(panels).forEach(p => p?.classList.remove('panel-open'));
+      if (panels[name]) panels[name].classList.add('panel-open');
     }
 
-    navItems.forEach(btn => {
-      btn.addEventListener('click', () => setActivePanel(btn.dataset.panel));
-    });
-
-    // Chiudi pannello cliccando fuori
-    document.addEventListener('click', (e) => {
-      if (window.innerWidth <= 768) {
-        const isPanel = e.target.closest('.output-cards-container, .config-panel, .mobile-nav');
-        if (!isPanel && !e.target.closest('.spdet, .moverlay')) {
-          setActivePanel('map');
-        }
+    navItems.forEach(btn => btn.addEventListener('click', () => setPanel(btn.dataset.panel)));
+    
+    // Chiudi pannelli cliccando sulla mappa
+    document.getElementById('lmap').addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#lmap') && !e.target.closest('.leaflet-popup')) {
+        setPanel('map');
       }
     });
 
-    // Esponi per uso inline
-    window.setActivePanel = setActivePanel;
+    window.setMobilePanel = setPanel;
   })();
 })();
