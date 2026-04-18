@@ -297,7 +297,28 @@
     catch(e){sr.innerHTML='<p style="padding:10px;color:var(--red)">Errore ricerca</p>';}
   };
   window.goTo = (lat,lon,name) => { map.setView([lat,lon],11,{animate:true}); S.lat=parseFloat(lat); S.lon=parseFloat(lon); hideRes(); loadWeather(S.lat,S.lon); };
-  window.locateMe = () => { notify('📡 Rilevamento…',''); navigator.geolocation.getCurrentPosition(async pos=>{ const {latitude:la,longitude:lo}=pos.coords; map.setView([la,lo],13,{animate:true}); S.lat=la; S.lon=lo; await loadWeather(la,lo); },()=>notify('⚠️ Posizione negata','error')); };
+  window.locateMe = () => {
+    notify('📡 Rilevamento posizione…','');
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const {latitude:la, longitude:lo} = pos.coords;
+      map.setView([la, lo], 13, {animate: false}); // false evita il pan continuo
+      S.lat = la; S.lon = lo;
+    
+      if(S.locMarker) map.removeLayer(S.locMarker);
+    
+      // ✅ FIX: rimosso .openPopup(), popup solo al tap/click
+      S.locMarker = L.circleMarker([la, lo], {
+        radius: 9,
+        color: '#0066cc',
+        fillColor: '#4a9eff',
+        fillOpacity: 0.8,
+        weight: 3,
+        className: 'loc-marker'
+      }).addTo(map).bindPopup('📍 Sei qui');
+    
+      await loadWeather(la, lo);
+    }, () => notify('⚠️ Impossibile ottenere la posizione', 'error'));
+  };
   window.cycleLayer = () => { S.mapStyleIdx=(S.mapStyleIdx+1)%TILES.length; tile.setUrl(TILES[S.mapStyleIdx].u); document.getElementById('layerLbl').textContent=TILES[S.mapStyleIdx].l; };
   
   window.openSpot = id => { 

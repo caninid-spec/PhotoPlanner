@@ -182,4 +182,14 @@ input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 20p
   .site-header { height: 52px; padding: 0 12px; }
   .logo { font-size: 16px; }
   input, select, textarea { font-size: 16px !important; }
+
+  /* FIX: Stabilizza marker posizione, elimina oscillazioni */
+  .loc-marker {
+    pointer-events: all !important;
+    transition: none !important;
+  }
+  .loc-marker path, 
+  .loc-marker circle {
+    transition: none !important;
+  }
 }
