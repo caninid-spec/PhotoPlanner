@@ -301,22 +301,32 @@
     notify('📡 Rilevamento posizione…','');
     navigator.geolocation.getCurrentPosition(async pos => {
       const {latitude:la, longitude:lo} = pos.coords;
-      map.setView([la, lo], 13, {animate: false}); // false evita il pan continuo
       S.lat = la; S.lon = lo;
     
+      // 1. Sposta la mappa (animazione fluida verso la posizione)
+      map.setView([la, lo], 13, {animate: true}); 
+    
+      // 2. Rimuovi il vecchio marker se esiste
       if(S.locMarker) map.removeLayer(S.locMarker);
     
-      // ✅ FIX: rimosso .openPopup(), popup solo al tap/click
+      // 3. Crea il nuovo marker STABILE (Nessun openPopup automatico!)
       S.locMarker = L.circleMarker([la, lo], {
         radius: 9,
-        color: '#0066cc',
-        fillColor: '#4a9eff',
+        color: '#0066cc',       // Bordo blu scuro
+        fillColor: '#4a9eff',   // Interno blu chiaro
         fillOpacity: 0.8,
         weight: 3,
-        className: 'loc-marker'
-      }).addTo(map).bindPopup('📍 Sei qui');
+        className: 'loc-marker' // Classe per CSS custom se serve
+      }).addTo(map);
+      
+      // 4. Il popup si apre SOLO al click, evitando lo zoom indesiderato
+      S.locMarker.bindPopup('📍 Sei qui').on('click', function() {
+        this.openPopup();
+      });
     
+      // Carica il meteo per la nuova posizione
       await loadWeather(la, lo);
+    
     }, () => notify('⚠️ Impossibile ottenere la posizione', 'error'));
   };
   window.cycleLayer = () => { S.mapStyleIdx=(S.mapStyleIdx+1)%TILES.length; tile.setUrl(TILES[S.mapStyleIdx].u); document.getElementById('layerLbl').textContent=TILES[S.mapStyleIdx].l; };
