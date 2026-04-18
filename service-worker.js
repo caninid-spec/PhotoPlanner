@@ -1,6 +1,4 @@
-// ═══════════════════════════════════════════════
 // service-worker.js — PhotoPlanner (FIXED)
-// ═══════════════════════════════════════════════
 const CACHE_NAME = 'photoplanner-v3';
 const FILES_TO_CACHE = [
   './', './index.html', './style.css', './main.js', './manifest.json',

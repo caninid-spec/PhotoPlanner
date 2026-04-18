@@ -1,5 +1,5 @@
 // ════════════════════════════════════════════════════════════
-// main.js — PhotoPlanner (FIXED & OPTIMIZED)
+// main.js — PhotoPlanner (PRODUCTION READY)
 // ════════════════════════════════════════════════════════════
 (function() {
   'use strict';
@@ -216,9 +216,77 @@
     if (item) { const sp = S.spots.find(s=>s.id===item.dataset.id); if(sp) { openSpot(sp.id); map.setView([sp.lat,sp.lon], Math.max(map.getZoom(),11), {animate:true}); }}
   });
 
-  window.onTime = t => { S.timeHour=Math.min(parseInt(t),71); const d=S.weatherData; if(!d)return; const i=hIdx(d); document.getElementById('timeDisplay').textContent=d.hourly.time?.[i]?.split('T')[1]?.slice(0,5)||'--:--'; document.getElementById('timeDate').textContent=d.hourly.time?.[i]?.split('T')[0]||'—'; if(S.weatherData)drawHeat(d); };
+  window.onTime = t => { 
+    S.timeHour=Math.min(parseInt(t),71); 
+    const d=S.weatherData; if(!d)return; 
+    const i=hIdx(d); 
+    document.getElementById('timeDisplay').textContent=d.hourly.time?.[i]?.split('T')[1]?.slice(0,5)||'--:--'; 
+    document.getElementById('timeDate').textContent=d.hourly.time?.[i]?.split('T')[0]||'—'; 
+    if(S.weatherData)drawHeat(d);
+    if (S.sunOn) updateSunPosition(); // Aggiorna sole quando cambia ora
+  };
+  
   window.setHr = h => { const max=Math.min((S.weatherData?.hourly?.time?.length||72)-1, Math.round(h*4)); document.getElementById('timeSlider').value=max; onTime(max); };
-  window.toggleSunTool = () => { S.sunOn=!S.sunOn; document.getElementById('sunBtn').classList.toggle('active',S.sunOn); };
+  
+  window.toggleSunTool = () => {
+    S.sunOn = !S.sunOn;
+    document.getElementById('sunBtn').classList.toggle('active', S.sunOn);
+    if (S.sunOn && S.weatherData) {
+      updateSunPosition();
+    } else if (!S.sunOn && S.sunMarker) {
+      map.removeLayer(S.sunMarker);
+      if (S.sunLine) map.removeLayer(S.sunLine);
+    }
+  };
+
+  function updateSunPosition() {
+    if (!S.weatherData || !S.sunOn) return;
+    const i = hIdx(S.weatherData);
+    const timeStr = S.weatherData.hourly.time?.[i] || '';
+    if (!timeStr) return;
+    const timePart = timeStr.split('T')[1];
+    const [hours, minutes] = timePart.split(':').map(Number);
+    const decimalHour = hours + minutes / 60;
+    const dayOfYear = Math.floor((new Date(timeStr) - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+    const latRad = S.lat * Math.PI / 180;
+    const declination = 23.45 * Math.sin(2 * Math.PI * (dayOfYear - 81) / 365) * Math.PI / 180;
+    const hourAngle = (decimalHour - 12) * 15 * Math.PI / 180;
+    const sinElevation = Math.sin(latRad) * Math.sin(declination) + Math.cos(latRad) * Math.cos(declination) * Math.cos(hourAngle);
+    const elevation = Math.asin(Math.max(-1, Math.min(1, sinElevation))) * 180 / Math.PI;
+    const cosAzimuth = (Math.sin(declination) - Math.sin(latRad) * sinElevation) / (Math.cos(latRad) * Math.cos(Math.asin(Math.max(-1, Math.min(1, sinElevation)))));
+    let azimuth = Math.acos(Math.max(-1, Math.min(1, cosAzimuth))) * 180 / Math.PI;
+    if (hourAngle > 0) azimuth = 360 - azimuth;
+    const distance = elevation > 0 ? Math.min(elevation / 90 * 5, 5) : 0;
+    const bearing = (azimuth - 180) * Math.PI / 180;
+    const sunLat = S.lat + (distance / 111) * Math.cos(bearing);
+    const sunLon = S.lon + (distance / (111 * Math.cos(S.lat * Math.PI / 180))) * Math.sin(bearing);
+    if (S.sunMarker) map.removeLayer(S.sunMarker);
+    if (S.sunLine) map.removeLayer(S.sunLine);
+    if (elevation > 0) {
+      S.sunMarker = L.marker([sunLat, sunLon], {
+        icon: L.divIcon({
+          html: `<div style="width:40px;height:40px;background:radial-gradient(circle, #fbbf24 0%, #f59e0b 70%);border-radius:50%;box-shadow:0 0 20px rgba(251,191,36,0.8);display:flex;align-items:center;justify-content:center;font-size:20px;">☀️</div>`,
+          iconSize: [40, 40],
+          className: 'sun-marker'
+        })
+      }).addTo(map).bindPopup(`🌞 Sole<br>Elevazione: ${elevation.toFixed(1)}°<br>Azimuth: ${azimuth.toFixed(0)}°`);
+      S.sunLine = L.polyline([[S.lat, S.lon], [sunLat, sunLon]], {
+        color: '#fbbf24',
+        weight: 2,
+        dashArray: '5, 5',
+        opacity: 0.6
+      }).addTo(map);
+    } else {
+      S.sunMarker = L.marker([S.lat, S.lon], {
+        icon: L.divIcon({
+          html: `<div style="font-size:24px;filter:drop-shadow(0 0 10px rgba(0,0,0,0.5));">🌙</div>`,
+          iconSize: [30, 30],
+          className: 'moon-marker'
+        })
+      }).addTo(map).bindPopup(`🌙 Notte<br>Sole sotto l'orizzonte`);
+    }
+  }
+
   window.notify = (msg,type) => { const t=document.getElementById('toast'); t.querySelector('span').textContent=msg; t.className='toast '+type; setTimeout(()=>t.className='toast',3000); };
   window.hideRes = () => { document.getElementById('searchResults').innerHTML=''; };
   let sdTimer;
@@ -231,11 +299,63 @@
   window.goTo = (lat,lon,name) => { map.setView([lat,lon],11,{animate:true}); S.lat=parseFloat(lat); S.lon=parseFloat(lon); hideRes(); loadWeather(S.lat,S.lon); };
   window.locateMe = () => { notify('📡 Rilevamento…',''); navigator.geolocation.getCurrentPosition(async pos=>{ const {latitude:la,longitude:lo}=pos.coords; map.setView([la,lo],13,{animate:true}); S.lat=la; S.lon=lo; await loadWeather(la,lo); },()=>notify('⚠️ Posizione negata','error')); };
   window.cycleLayer = () => { S.mapStyleIdx=(S.mapStyleIdx+1)%TILES.length; tile.setUrl(TILES[S.mapStyleIdx].u); document.getElementById('layerLbl').textContent=TILES[S.mapStyleIdx].l; };
-  window.openSpot = id => { const sp=S.spots.find(s=>s.id===id); if(!sp) return; S.curSpotId=id; document.getElementById('spPhoto').textContent=sp.emoji; document.getElementById('spname').textContent=sp.name; document.getElementById('spmeta').innerHTML=`<span class="sptag">${sp.emoji} ${sp.type}</span><span class="sptag">${sp.alt}</span>`; document.getElementById('spwlist').innerHTML=(sp.w||[]).map(w=>`<div class="spwi"><span>${w.i}</span><span class="swname">${w.n}</span><div class="swbar"><div class="swfill" style="width:${w.p}%"></div></div><span class="swpct">${w.p}%</span></div>`).join(''); document.getElementById('bkmBtn').textContent=S.saved.has(id)?'🔖':'🏷'; document.getElementById('spdet').classList.add('open'); map.setView([sp.lat,sp.lon],Math.max(map.getZoom(),10),{animate:true}); };
+  
+  window.openSpot = id => { 
+    const sp=S.spots.find(s=>s.id===id); if(!sp) return; 
+    S.curSpotId=id; 
+    document.getElementById('spPhoto').textContent=sp.emoji; 
+    document.getElementById('spname').textContent=sp.name; 
+    document.getElementById('spmeta').innerHTML=`<span class="sptag">${sp.emoji} ${sp.type}</span><span class="sptag">${sp.alt}</span>`; 
+    document.getElementById('spwlist').innerHTML=(sp.w||[]).map(w=>`<div class="spwi"><span>${w.i}</span><span class="swname">${w.n}</span><div class="swbar"><div class="swfill" style="width:${w.p}%"></div></div><span class="swpct">${w.p}%</span></div>`).join(''); 
+    document.getElementById('bkmBtn').textContent=S.saved.has(id)?'🔖':'🏷'; 
+    document.getElementById('spdet').classList.add('open'); 
+    map.setView([sp.lat,sp.lon],Math.max(map.getZoom(),10),{animate:true}); 
+  };
+  
   window.closeSpot = () => { document.getElementById('spdet').classList.remove('open'); S.curSpotId=null; };
-  window.bookmarkSpot = async () => { const id=S.curSpotId; if(!id) return; try { if(S.saved.has(id)) { await dbCall(`${WORKER_URL}/bookmarks/${id}`, {method:'DELETE'}); S.saved.delete(id); } else { await dbCall(`${WORKER_URL}/bookmarks/${id}`, {method:'POST'}); S.saved.add(id); } notify(S.saved.has(id)?'⭐ Salvato':'Rimosso','success'); document.getElementById('bkmBtn').textContent=S.saved.has(id)?'🔖':'🏷'; renderSavedSpots(); } catch(e){ console.error(e); } };
-  window.startAddSpot = () => { notify('📍 Clicca sulla mappa','success'); S.pendingLL=true; map.getContainer().style.cursor='crosshair'; map.once('click',e=>{ S.pendingLL=e.latlng; map.getContainer().style.cursor=''; if(S.tempMarker)map.removeLayer(S.tempMarker); S.tempMarker=L.circleMarker(e.latlng,{radius:11,color:'#e8f03c',fillColor:'#e8f03c',fillOpacity:.4,weight:2}).addTo(map); document.getElementById('spotModalSub').textContent=`Pos: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`; document.getElementById('spotModal').classList.add('open'); }); };
-  window.saveSpot = async () => { const name=document.getElementById('newSpotName').value.trim()||'Spot'; const ll=S.pendingLL; if(!ll) return; const typeEl=document.getElementById('newSpotType'); const sp={id:String(Date.now()),name,lat:ll.lat,lon:ll.lng,emoji:typeEl.options[typeEl.selectedIndex].text.slice(0,2),type:typeEl.value,alt:'—',rat:'Nuovo',w:[]}; try { await dbCall(`${WORKER_URL}/spots`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sp)}); S.spots.push(sp); addMarker(sp); if(S.tempMarker){map.removeLayer(S.tempMarker);S.tempMarker=null;} document.getElementById('spotModal').classList.remove('open'); notify(`📍 ${name} aggiunto`,'success'); document.getElementById('newSpotName').value=''; S.pendingLL=null; } catch(e){} };
+  
+  window.bookmarkSpot = async () => { 
+    const id=S.curSpotId; if(!id) return; 
+    try { 
+      if(S.saved.has(id)) { await dbCall(`${WORKER_URL}/bookmarks/${id}`, {method:'DELETE'}); S.saved.delete(id); } 
+      else { await dbCall(`${WORKER_URL}/bookmarks/${id}`, {method:'POST'}); S.saved.add(id); } 
+      notify(S.saved.has(id)?'⭐ Salvato':'Rimosso','success'); 
+      document.getElementById('bkmBtn').textContent=S.saved.has(id)?'🔖':'🏷'; 
+      renderSavedSpots(); 
+    } catch(e){ console.error(e); } 
+  };
+  
+  window.startAddSpot = () => { 
+    notify('📍 Clicca sulla mappa','success'); 
+    S.pendingLL=true; 
+    map.getContainer().style.cursor='crosshair'; 
+    map.once('click',e=>{ 
+      S.pendingLL=e.latlng; 
+      map.getContainer().style.cursor=''; 
+      if(S.tempMarker)map.removeLayer(S.tempMarker); 
+      S.tempMarker=L.circleMarker(e.latlng,{radius:11,color:'#e8f03c',fillColor:'#e8f03c',fillOpacity:.4,weight:2}).addTo(map); 
+      document.getElementById('spotModalSub').textContent=`Pos: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`; 
+      document.getElementById('spotModal').classList.add('open'); 
+    }); 
+  };
+  
+  window.saveSpot = async () => { 
+    const name=document.getElementById('newSpotName').value.trim()||'Spot'; 
+    const ll=S.pendingLL; if(!ll) return; 
+    const typeEl=document.getElementById('newSpotType'); 
+    const sp={id:String(Date.now()),name,lat:ll.lat,lon:ll.lng,emoji:typeEl.options[typeEl.selectedIndex].text.slice(0,2),type:typeEl.value,alt:'—',rat:'Nuovo',w:[]}; 
+    try { 
+      await dbCall(`${WORKER_URL}/spots`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(sp)}); 
+      S.spots.push(sp); 
+      addMarker(sp); 
+      if(S.tempMarker){map.removeLayer(S.tempMarker);S.tempMarker=null;} 
+      document.getElementById('spotModal').classList.remove('open'); 
+      notify(`📍 ${name} aggiunto`,'success'); 
+      document.getElementById('newSpotName').value=''; 
+      S.pendingLL=null; 
+    } catch(e){} 
+  };
+  
   window.closeMod = (id,e) => { if(!e||e.target.id===id) document.getElementById(id).classList.remove('open'); };
 
   // Search & Input Listeners
@@ -246,15 +366,32 @@
   document.getElementById('savedSpotFilter')?.addEventListener('input', renderSavedSpots);
   document.getElementById('savedSpotSort')?.addEventListener('change', renderSavedSpots);
 
-  map.on('click', async e=>{ if(S.pendingLL) return; S.lat=e.latlng.lat; S.lon=e.latlng.lng; await loadWeather(S.lat,S.lon); });
+  // MAP CLICK - con marker temporaneo
+  map.on('click', async e => {
+    if (S.pendingLL) return;
+    S.lat = e.latlng.lat;
+    S.lon = e.latlng.lng;
+    
+    // Aggiungi/aggiorna marker temporaneo
+    if (S.tempMarker) map.removeLayer(S.tempMarker);
+    S.tempMarker = L.circleMarker([S.lat, S.lon], {
+      radius: 12,
+      color: '#0066cc',
+      fillColor: '#4a9eff',
+      fillOpacity: 0.6,
+      weight: 3,
+      className: 'click-marker'
+    }).addTo(map);
+    
+    await loadWeather(S.lat, S.lon);
+  });
+  
   map.on('moveend', ()=>{ if(S.weatherData)drawHeat(S.weatherData); });
   window.addEventListener('resize', ()=>{ map.invalidateSize(); if(S.weatherData)setTimeout(()=>drawHeat(S.weatherData),100); });
 
   onTime(6); map.invalidateSize(); initDB();
 
-  // ═══════════════════════════════════════════════
   // MOBILE UI CONTROLLER
-  // ═══════════════════════════════════════════════
   (function() {
     const navItems = document.querySelectorAll('.nav-item');
     const panels = {
@@ -270,7 +407,6 @@
 
     navItems.forEach(btn => btn.addEventListener('click', () => setPanel(btn.dataset.panel)));
     
-    // Chiudi pannelli cliccando sulla mappa
     document.getElementById('lmap')?.addEventListener('pointerdown', (e) => {
       if (e.target.closest('#lmap') && !e.target.closest('.leaflet-popup')) {
         setPanel('map');

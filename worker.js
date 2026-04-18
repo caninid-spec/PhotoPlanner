@@ -39,7 +39,6 @@ export default {
         const id = path.split('/')[2];
         return await handleRemoveBookmark(id, env, corsHeaders);
       }
-
       return new Response(JSON.stringify({ error: 'Not Found' }), { status: 404, headers: corsHeaders });
     } catch (error) {
       console.error('Worker error:', error);
@@ -48,7 +47,6 @@ export default {
   },
 };
 
-// Lazy DB Init
 let dbPromise = null;
 async function getDB(env) {
   if (!dbPromise) {
