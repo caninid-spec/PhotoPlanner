@@ -24,6 +24,7 @@
   </header>
 
   <div class="page-wrap">
+    <!-- PANNELLO SINISTRO: CONFIGURAZIONE -->
     <aside class="config-panel">
       <div class="card">
         <div class="card-title">🔍 Cerca e Azioni Rapide</div>
@@ -35,9 +36,9 @@
           <div class="search-results" id="searchResults"></div>
         </div>
         <div class="action-buttons">
-          <button class="action-btn" onclick="window.startAddSpot()" aria-label="Aggiungi Spot">📍<span class="action-label">Aggiungi</span></button>
-          <button class="action-btn" onclick="window.cycleLayer()" aria-label="Cambia Mappa">🗺️<span class="action-label">Mappa</span></button>
-          <button class="action-btn" id="sunBtn" onclick="window.toggleSunTool()" aria-label="Sole">☀️<span class="action-label">Sole</span></button>
+          <button class="action-btn" onclick="window.startAddSpot()">📍<span class="action-label">Aggiungi</span></button>
+          <button class="action-btn" onclick="window.cycleLayer()">🗺️<span class="action-label">Mappa</span></button>
+          <button class="action-btn" id="sunBtn" onclick="window.toggleSunTool()">☀️<span class="action-label">Sole</span></button>
         </div>
       </div>
 
@@ -58,6 +59,7 @@
       </div>
     </aside>
 
+    <!-- AREA PRINCIPALE: MAPPA + RISULTATI -->
     <main class="results-area">
       <div class="map-container">
         <div id="lmap"></div>
@@ -157,21 +159,20 @@
   <!-- Toast -->
   <div id="toast" class="toast"><span></span></div>
 
+  <!-- Mobile Bottom Navigation -->
+  <nav class="mobile-nav">
+    <div class="nav-item active" data-panel="map">
+      <span class="nav-icon">🗺️</span> Mappa
+    </div>
+    <div class="nav-item" data-panel="weather">
+      <span class="nav-icon">🌦️</span> Meteo
+    </div>
+    <div class="nav-item" data-panel="spots">
+      <span class="nav-icon">📍</span> Spot
+    </div>
+  </nav>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="./main.js"></script>
-
-<!-- Mobile Bottom Navigation -->
-<nav class="mobile-nav">
-  <div class="nav-item active" data-panel="map">
-    <span class="nav-icon">🗺️</span> Mappa
-  </div>
-  <div class="nav-item" data-panel="weather">
-    <span class="nav-icon">🌦️</span> Meteo
-  </div>
-  <div class="nav-item" data-panel="spots">
-    <span class="nav-icon">📍</span> Spot
-  </div>
-</nav>
-
 </body>
 </html>

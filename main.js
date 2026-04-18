@@ -271,7 +271,7 @@
     navItems.forEach(btn => btn.addEventListener('click', () => setPanel(btn.dataset.panel)));
     
     // Chiudi pannelli cliccando sulla mappa
-    document.getElementById('lmap').addEventListener('pointerdown', (e) => {
+    document.getElementById('lmap')?.addEventListener('pointerdown', (e) => {
       if (e.target.closest('#lmap') && !e.target.closest('.leaflet-popup')) {
         setPanel('map');
       }
