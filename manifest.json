@@ -5,27 +5,12 @@
   "start_url": "/PhotoPlanner/",
   "scope": "/PhotoPlanner/",
   "display": "standalone",
-  "background_color": "#0a0c10",
-  "theme_color": "#12151c",
+  "background_color": "#fafbfc",
+  "theme_color": "#0066cc",
   "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "icons/android-chrome-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/android-chrome-512x512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "./icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
