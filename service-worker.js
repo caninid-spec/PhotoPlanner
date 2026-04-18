@@ -1,67 +1,37 @@
-// ════════════════════════════════════════
-// service-worker.js — PhotoWeather
-// ════════════════════════════════════════
-
-const CACHE_NAME = 'photoweather-cache-v1';
-
-// App Shell: The essential files needed for the app to run.
-// I have updated this list to include your specific icon files.
-const FILES_TO_CACHE = [
-  '/PhotoPlanner/',
-  '/PhotoPlanner/index.html',
-  '/PhotoPlanner/style.css',
-  '/PhotoPlanner/main.js',
-  '/PhotoPlanner/manifest.json',
-  '/icons/android-chrome-192x192.png',
-  '/icons/android-chrome-512x512.png',
-  '/icons/apple-touch-icon.png',
-  '/icons/favicon-16x16.png',
-  '/icons/favicon-32x32.png',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js',
-  'https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap'
+const CACHE_NAME = 'photoplanner-v2';
+const SHELL = [
+  './', './index.html', './style.css', './main.js', './manifest.json',
+  './icons/android-chrome-192x192.png', './icons/android-chrome-512x512.png'
 ];
 
-// 1. Install the service worker and cache the app shell.
-self.addEventListener('install', (evt) => {
-  console.log('[ServiceWorker] Install');
-  evt.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      console.log('[ServiceWorker] Pre-caching app shell');
-      return cache.addAll(FILES_TO_CACHE);
-    })
-  );
+self.addEventListener('install', evt => {
+  console.log('[SW] Install');
+  evt.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL)));
   self.skipWaiting();
 });
 
-// 2. Activate the service worker and clean up old caches.
-self.addEventListener('activate', (evt) => {
-  console.log('[ServiceWorker] Activate');
-  evt.waitUntil(
-    caches.keys().then((keyList) => {
-      return Promise.all(keyList.map((key) => {
-        if (key !== CACHE_NAME) {
-          console.log('[ServiceWorker] Removing old cache', key);
-          return caches.delete(key);
-        }
-      }));
-    })
-  );
+self.addEventListener('activate', evt => {
+  console.log('[SW] Activate');
+  evt.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
   self.clients.claim();
 });
 
-// 3. Serve assets from cache first (Cache-First Strategy).
-self.addEventListener('fetch', (evt) => {
-  if (evt.request.method !== 'GET') {
-    return;
-  }
-  
+self.addEventListener('fetch', evt => {
+  if (evt.request.method !== 'GET') return;
+  const url = new URL(evt.request.url);
+  const isStatic = SHELL.some(s => url.pathname.endsWith(s.replace('./','')));
+  const isApi = url.hostname.includes('open-meteo') || url.hostname.includes('workers.dev') || url.hostname.includes('openstreetmap');
+
   evt.respondWith(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.match(evt.request)
-        .then((response) => {
-          return response || fetch(evt.request);
-        });
+    caches.match(evt.request).then(res => {
+      if (res) return res;
+      return fetch(evt.request).then(networkRes => {
+        if (networkRes.ok && (isStatic || isApi)) {
+          const cache = caches.open(CACHE_NAME);
+          cache.then(c => c.put(evt.request, networkRes.clone()));
+        }
+        return networkRes;
+      });
     })
   );
 });

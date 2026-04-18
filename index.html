@@ -4,50 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" 
-        content="connect-src 'self' https://photoscoutai.canini-d.workers.dev https://cdnjs.cloudflare.com https://fonts.googleapis.com https://api.openai.com">
+        content="default-src 'self'; 
+                 script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; 
+                 style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; 
+                 connect-src 'self' https://photoscoutai.canini-d.workers.dev https://api.open-meteo.com https://nominatim.openstreetmap.org https://api.openai.com; 
+                 font-src 'self' https://fonts.gstatic.com; 
+                 img-src 'self'  https:; 
+                 manifest-src 'self'">
   <title>PhotoPlanner — Pianificazione Fotografica Intelligente</title>
-
-  <!-- PWA & BROWSER ICON LINKS (UPDATED) -->
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-  
+  <link rel="manifest" href="./manifest.json">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://photoscoutai.canini-d.workers.dev">
 </head>
 <body>
+  <header class="site-header">
+    <div class="logo">📋 PhotoPlanner</div>
+  </header>
 
-<header class="site-header">
-  <div class="logo">📋 PhotoPlanner</div>
-</header>
-
-<div class="page-wrap">
-  <!-- CONFIGURATION PANEL (LEFT) -->
-  <aside class="config-panel">
-    
-    <!-- Card 1: Search and Actions -->
-    <div class="card">
-        <h2 class="card-title">Cerca e Azioni Rapide</h2>
+  <div class="page-wrap">
+    <aside class="config-panel">
+      <div class="card">
+        <div class="card-title">🔍 Cerca e Azioni Rapide</div>
         <div class="search-wrap">
-          <div class="search-bar"><span>🔍</span><input type="text" id="searchInput" placeholder="Cerca luogo, montagna, lago…" autocomplete="off"></div>
+          <div class="search-bar">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Cerca posizione..." autocomplete="off">
+          </div>
           <div class="search-results" id="searchResults"></div>
         </div>
         <div class="action-buttons">
-          <button class="action-btn" onclick="locateMe()" title="Trova la mia posizione (L)">◎<span class="action-label">Posizione</span></button>
-          <button class="action-btn" onclick="startAddSpot()" title="Aggiungi un nuovo spot">📍<span class="action-label">Aggiungi Spot</span></button>
-          <button class="action-btn" id="sunBtn" onclick="toggleSunTool()" title="Mostra/nascondi strumento sole (S)">☀️<span class="action-label">Sole</span></button>
+          <button class="action-btn" onclick="window.startAddSpot()" aria-label="Aggiungi Spot">📍<span class="action-label">Aggiungi</span></button>
+          <button class="action-btn" onclick="window.cycleLayer()" aria-label="Cambia Mappa">🗺️<span class="action-label">Mappa</span></button>
+          <button class="action-btn" id="sunBtn" onclick="window.toggleSunTool()" aria-label="Sole">☀️<span class="action-label">Sole</span></button>
         </div>
-    </div>
-    
-    <!-- Card 2: Spot Salvati -->
-    <div class="card">
-        <h2 class="card-title">Spot Salvati</h2>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Spot Salvati</div>
         <div class="saved-controls">
-          <input type="text" id="savedSpotFilter" placeholder="Filtra per nome…" class="filter-input">
+          <input type="text" id="savedSpotFilter" class="filter-input" placeholder="Filtra...">
           <select id="savedSpotSort" class="filter-select">
             <option value="name-asc">Nome A-Z</option>
             <option value="name-desc">Nome Z-A</option>
@@ -55,84 +52,112 @@
             <option value="recent">Più Recenti</option>
           </select>
         </div>
-        <div class="saved-spots-list" id="savedSpotsList">
+        <div id="savedSpotsList" class="saved-spots-list">
           <p class="placeholder-text">Nessuno spot salvato ancora.</p>
         </div>
-    </div>
-    
-    <!-- Card 3: Forecast Settings -->
-    <div class="card">
-        <h2 class="card-title">Parametri Previsione</h2>
-        <p class="slabel">Sorgente Dati</p>
-        <div class="mo active" onclick="selModel(this,'Europa Centrale')"><div class="mo-name">Europa Centrale</div><div class="mo-det">2,2 km · 24h · ogni 3h</div></div>
-        <div class="mo" onclick="selModel(this,'Europa')"><div class="mo-name">Europa</div><div class="mo-det">7 km · 72h · ogni 3h</div></div>
-        
-        <p class="slabel">Parametro Meteo</p>
-        <div class="pgrid">
-          <div class="pc active" onclick="selParam(this,'cloud_cover_low','Cielo Rosso','rg')"><div class="pi">🔴</div><div class="pn">Cielo Rosso</div></div>
-          <div class="pc" onclick="selParam(this,'visibility','Nebbia','bw')"><div class="pi">🌫</div><div class="pn">Nebbia</div></div>
-          <div class="pc" onclick="selParam(this,'precipitation_probability','Temporale','pu')"><div class="pi">⛈</div><div class="pn">Temporale</div></div>
-          <div class="pc" onclick="selParam(this,'cloud_cover','Cielo Notturno','in')"><div class="pi">🌙</div><div class="pn">Cielo Notturno</div></div>
-          <div class="pc" onclick="selParam(this,'direct_radiation','Alba/Tramonto','or')"><div class="pi">🌅</div><div class="pn">Alba/Tramonto</div></div>
-          <div class="pc" onclick="selParam(this,'shortwave_radiation','Contrasto','ye')"><div class="pi">☀️</div><div class="pn">Contrasto</div></div>
-          <div class="pc" onclick="selParam(this,'wind_speed_10m','Riflesso','te')"><div class="pi">🌊</div><div class="pn">Riflesso</div></div>
-          <div class="pc" onclick="selParam(this,'cloud_cover_high','Ora Blu','bl')"><div class="pi">🌌</div><div class="pn">Ora Blu</div></div>
+      </div>
+    </aside>
+
+    <main class="results-area">
+      <div class="map-container">
+        <div id="lmap"></div>
+        <canvas id="heatCanvas"></canvas>
+        <div class="mapbar">
+          <div class="suninfo">
+            <span class="sunit">🌅 <span id="srTime">--:--</span></span>
+            <span class="sunit">🌇 <span id="ssTime">--:--</span></span>
+            <span class="sunit">🌙 <span id="moonTxt">-</span></span>
+          </div>
+          <button class="layerbtn" onclick="window.locateMe()">📍 Posizione</button>
         </div>
-        
-        <p class="slabel">Orario Previsione</p>
-        <div class="td" id="timeDisplay">06:00</div>
-        <div class="tdate" id="timeDate">—</div>
-        <input type="range" min="0" max="71" value="6" id="timeSlider" oninput="onTime(this.value)">
-        <div class="tsteps"><span class="tstep mark" onclick="setHr(6)">Alba</span><span class="tstep" onclick="setHr(12)">Mezz.</span><span class="tstep mark" onclick="setHr(19)">Tram.</span><span class="tstep" onclick="setHr(23)">Notte</span></div>
-    </div>
-  </aside>
+        <div class="mapbottom">
+          <div class="legend">
+            <div class="legtit" id="layerLbl">Dark</div>
+            <div class="legbar"></div>
+            <div class="leglabs"><span class="legl">Basso</span><span class="legl">Alto</span></div>
+          </div>
+        </div>
+      </div>
 
-  <!-- MAP & RESULTS AREA (RIGHT) -->
-  <main class="results-area">
-    <div class="map-container">
-      <div id="lmap"></div>
-      <canvas id="heatCanvas"></canvas>
-      <div class="mapbar">
-        <div class="suninfo"><div class="sunit"><span>🌅</span><span id="srTime">—:—</span></div><div class="sunit"><span>🌇</span><span id="ssTime">—:—</span></div><div class="sunit"><span>🌙</span><span id="moonTxt">—</span></div></div>
-        <button class="layerbtn" onclick="cycleLayer()">🗂 <span id="layerLbl">Dark</span></button>
-      </div>
-      <div class="mapbottom">
-        <div class="legend"><div class="legtit" id="legTitle">Prob. Cielo Rosso</div><div class="legbar" id="legBar"></div><div class="leglabs"><span class="legl">0%</span><span class="legl">50%</span><span class="legl">100%</span></div></div>
-      </div>
-      <div class="spdet" id="spdet">
-          <div class="closebtn" onclick="closeSpot()">✕</div><div class="sphoto" id="sphoto">📍</div>
-          <div class="spact"><div class="spbtn" id="bkmBtn" onclick="bookmarkSpot()">🔖</div><div class="spbtn" onclick="notify('📤 Seleziona foto','success')">📤</div><div class="spbtn" onclick="notify('✏️ Modifica spot','success')">✏️</div></div>
-          <div class="spinfo"><div class="spname" id="spname">—</div><div class="spmeta" id="spmeta"></div><div class="spwlist" id="spwlist"></div><div class="ratrow"><button class="ratbtn" onclick="notify('👍 Grazie!','success')">👍 Rilevante</button><button class="ratbtn" onclick="notify('🌿 Info natura OK','success')">🌿 Natura OK</button></div></div>
-      </div>
-    </div>
-
-    <div class="output-cards-container">
-        <!-- Card 3: Weather Details -->
-        <div class="card" id="weather-output-card">
+      <div class="output-cards-container">
+        <div class="card" id="weather-card">
           <div id="weather-card-content">
-            <div class="wch"><span>🌍</span><span class="wct">Dati Meteo</span></div>
-            <p class="placeholder-text">Clicca su <b>qualsiasi punto della mappa</b> per caricare i dati meteo.</p>
+            <p class="placeholder-text">Clicca su qualsiasi punto della mappa per caricare i dati meteo.</p>
           </div>
         </div>
-
-        <!-- Card 4: AI Assistant -->
-        <div class="card" id="assistant-output-card">
+        <div class="card" id="assistant-card">
+          <div class="card-title">✨Assistente Fotografico AI</div>
           <div id="assistant-card-content">
-            <div class="wch"><span>✨</span><span class="wct">Assistente Fotografico AI</span></div>
-            <p class="placeholder-text">
-                Dopo aver caricato i dati, clicca su <b>"Chiedi all'AI"</b> nel pannello meteo.
-            </p>
+            <p class="placeholder-text">Dopo aver caricato i dati, clicca su "Analizza" nel pannello meteo.</p>
           </div>
         </div>
+        <div class="card">
+          <div class="card-title">Parametri Previsione</div>
+          <span class="slabel">Orario Previsione</span>
+          <div class="td" id="timeDisplay">06:00</div>
+          <div class="tdate" id="timeDate">—</div>
+          <input type="range" id="timeSlider" min="0" max="71" value="6" step="1" oninput="window.onTime(this.value)">
+          <div class="tsteps">
+            <span class="tstep mark" onclick="window.setHr(0.125)">06:00 — Alba</span>
+            <span class="tstep" onclick="window.setHr(0.5)">Mezz.</span>
+            <span class="tstep" onclick="window.setHr(0.75)">Tram.</span>
+            <span class="tstep" onclick="window.setHr(0.9)">Notte</span>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Spot Detail Panel -->
+  <div class="spdet" id="spdet">
+    <div class="spact">
+      <button class="closebtn" onclick="window.closeSpot()">✕</button>
+      <button class="spbtn" id="bkmBtn" onclick="window.bookmarkSpot()">🔖</button>
     </div>
-  </main>
-</div>
+    <div class="sphoto" id="spPhoto"></div>
+    <div class="spinfo">
+      <div class="spname" id="spname">—</div>
+      <div class="spmeta" id="spmeta"></div>
+      <div class="spwlist" id="spwlist"></div>
+      <div class="ratrow">
+        <button class="ratbtn" onclick="window.updateSpotRating('b')">👍 Rilevante</button>
+        <button class="ratbtn" onclick="window.updateSpotRating('n')">🌿 Natura</button>
+        <button class="ratbtn" onclick="window.updateSpotRating('u')">🌍 Dati Meteo</button>
+      </div>
+    </div>
+  </div>
 
-<!-- MODALS -->
-<div class="moverlay" id="spotModal" onclick="closeMod('spotModal',event)"><div class="modal"><div class="mtitle">Aggiungi Spot</div><div class="msub" id="spotModalSub">Clicca sulla mappa per posizionare</div><div class="fg"><label class="fl">Nome</label><input class="fi" id="newSpotName" placeholder="Nome luogo"></div><div class="fg"><label class="fl">Tipo</label><select class="fi" id="newSpotType"><option>🏔 Montagna</option><option>🌊 Lago</option><option>🌅 Colline</option><option>🏙 Città</option><option>🌲 Foresta</option><option>🏖 Costa</option></select></div><div class="mact"><button class="bsec" onclick="closeMod('spotModal')">Annulla</button><button class="bprim" onclick="saveSpot()">Aggiungi</button></div></div></div>
-<div class="toast" id="toast"><span id="toastMsg">—</span></div>
+  <!-- Add Spot Modal -->
+  <div class="moverlay" id="spotModal">
+    <div class="modal">
+      <h2 class="mtitle">Aggiungi Spot</h2>
+      <p class="msub" id="spotModalSub">Clicca sulla mappa per posizionare</p>
+      <div class="fg">
+        <label class="fl" for="newSpotName">Nome</label>
+        <input class="fi" id="newSpotName" type="text" placeholder="Es. Lago di Braies">
+      </div>
+      <div class="fg">
+        <label class="fl" for="newSpotType">Tipo</label>
+        <select class="fi" id="newSpotType">
+          <option value="Montagna">🏔 Montagna</option>
+          <option value="Lago">🌊 Lago</option>
+          <option value="Colline">🌅 Colline</option>
+          <option value="Città">🏙 Città</option>
+          <option value="Foresta">🌲 Foresta</option>
+          <option value="Costa">🏖 Costa</option>
+        </select>
+      </div>
+      <div class="mact">
+        <button class="bsec" onclick="window.closeMod('spotModal')">Annulla</button>
+        <button class="bprim" onclick="window.saveSpot()">Aggiungi</button>
+      </div>
+    </div>
+  </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="main.js"></script>
+  <!-- Toast -->
+  <div id="toast" class="toast"><span></span></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="./main.js"></script>
 </body>
 </html>
